@@ -4,11 +4,11 @@ import flask
 import os
 import json
 
-app = flask.Flask(__name__)
+app = flask.Flask("Centinel")
 
 @app.errorhandler(404)
 def not_found(error):
-    return flask.make_response(flask.jsonify( { 'error': 'Not found' } ), 404)
+    return flask.make_response(flask.jsonify({'error': 'Not found'}), 404)
 
 @app.route("/versions")
 def get_recommended_versions():
@@ -18,19 +18,20 @@ def get_recommended_versions():
 def submit_result():
     result = flask.request.json
 
-    # abort if message is empty of if there is no timestamp
-    if not result or "timestamp" not in result:
+    # abort if message is empty of if there is no result file
+    if not result or "files" not in result:
         flask.abort(400)
 
-    file_name = "result-%s.json" % (result["timestamp"])
+    #XXX: validate file and file name
+    data = result["files"]["data"]
+    file_name = result["files"]["file_name"]
     file_path = os.path.join(config.results_dir, file_name)
 
     #XXX: overwrite file if exists?
-    #XXX: validate file?
     with open(file_path, "w") as result_fh:
-        json.dump(result, result_fh)
+        json.dump(data, result_fh)
 
-    return flask.jsonify({"status":"success"}), 201
+    return flask.jsonify({"status" : "success"}), 201
 
 @app.route("/results")
 def get_results():
