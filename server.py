@@ -6,6 +6,10 @@ import json
 
 app = flask.Flask(__name__)
 
+@app.errorhandler(404)
+def not_found(error):
+    return flask.make_response(flask.jsonify( { 'error': 'Not found' } ), 404)
+
 @app.route("/versions/")
 def get_recommended_versions():
     return flask.jsonify({"versions" : config.recommended_versions})
