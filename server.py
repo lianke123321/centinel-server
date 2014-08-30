@@ -1,8 +1,9 @@
-import config
+import os
 import glob
 import flask
-import os
 import json
+
+import config
 
 from werkzeug import secure_filename
 
@@ -24,6 +25,7 @@ def submit_result():
 
     #XXX: overwrite file if exists?
     result_file = flask.request.files['result']
+
     file_name = secure_filename(result_file.filename)
     file_path = os.path.join(config.results_dir, file_name)
     result_file.save(file_path)
@@ -37,9 +39,7 @@ def get_results():
     #XXX: cache the list of results?
     # look in results directory
     for path in glob.glob(os.path.join(config.results_dir,'[!_]*.json')):
-        # get name of file and path
         file_name, ext = os.path.splitext(os.path.basename(path))
-        # read the result file
         with open(path) as result_file:
             try:
                 results[file_name] = json.load(result_file)
@@ -53,11 +53,9 @@ def get_results():
 def get_experiments(name=None):
     experiments = {}
 
-    # look for experiments in experiments directory
+    # look in experiments directory
     for path in glob.glob(os.path.join(config.experiments_dir,'[!_]*.py')):
-        # get name of file and path
         file_name, ext = os.path.splitext(os.path.basename(path))
-        # read the result file
         with open(path) as experiment_file:
             experiments[file_name] = experiment_file.read()
 
@@ -94,6 +92,10 @@ def get_clients(name=None):
 
 @app.route("/log", methods=["POST"])
 def submit_log():
+    pass
+
+@app.route("/register", methods=["POST"])
+def register():
     pass
 
 if __name__ == "__main__":
