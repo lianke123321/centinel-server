@@ -21,10 +21,11 @@ def submit_result():
         flask.abort(400)
 
     file_name = "result-%s.json" % (result["timestamp"])
+    file_path = os.path.join(config.results_dir, file_name)
 
     #XXX: overwrite file if exists?
     #XXX: validate file?
-    with open(file_name, "w") as result_fh:
+    with open(file_path, "w") as result_fh:
         json.dump(result, result_fh)
 
     return flask.jsonify({"status":"success"}), 201
