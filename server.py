@@ -26,7 +26,10 @@ def submit_result():
             file_name, ext = os.path.splitext(os.path.basename(path))
             # read the result file
             with open(path) as result_file:
-                results[file_name] = json.load(result_file)
+                try:
+                    results[file_name] = json.load(result_file)
+                except Exception, e:
+                    print "Couldn't open file - %s" % (path)
 
         return flask.jsonify({"results" : results})
 
