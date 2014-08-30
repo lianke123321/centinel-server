@@ -2,10 +2,11 @@ import config
 import glob
 import flask
 import os
+import json
 
 app = flask.Flask(__name__)
 
-@app.route("/versions")
+@app.route("/versions/")
 def get_recommended_versions():
     return flask.jsonify({"versions" : config.recommended_versions})
 
@@ -35,5 +36,18 @@ def get_experiment_list(name=None):
     else:
         return flask.jsonify({"experiments" : experiments.keys()})
 
+@app.route("/clients/")
+@app.route("/clients/<name>")
+def get_clients(name=None):
+    clients = {}
+    with open(config.clients_file) as clients_fh:
+        clients = json.load(clients_fh)
+
+    if name not in clients:
+        return flask.jsonify(clients)
+    else:
+        return flask.jsonify(client[name])
+        
+    
 if __name__ == "__main__":
     app.run(debug=True)
