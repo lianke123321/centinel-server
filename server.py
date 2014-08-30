@@ -47,7 +47,8 @@ def get_experiment_list(name=None):
         #XXX: Don't send a python file in JSON
         return flask.jsonify({"experiments" : experiments[name]})
     else:
-        return "Experiment not found"
+        # not found
+        flask.abort(404)
 
 @app.route("/clients/")
 @app.route("/clients/<name>")
@@ -64,7 +65,8 @@ def get_clients(name=None):
         # send requested client details 
         return flask.jsonify(client[name])
     else:
-        return "Client not found"
+        # not found
+        flask.abort(404)
 
 @app.route("/log", methods=["POST"])
 def log_file():
