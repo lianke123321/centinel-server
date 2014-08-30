@@ -15,14 +15,16 @@ def submit_result():
     if flask.request.method == "POST":
         pass
     else:
-        # look in results directory
         results = {}
+        # look in results directory
         for path in glob.glob(os.path.join(config.results_dir,'[!_]*.json')):
             # get name of file and path
             file_name, ext = os.path.splitext(os.path.basename(path))
+            # read the result file
             with open(path) as result_file:
                 results[file_name] = json.load(result_file)
-        return flask.jsonify({"results":results})
+
+        return flask.jsonify({"results" : results})
 
 @app.route("/experiments/")
 @app.route("/experiments/<name>")
@@ -32,13 +34,15 @@ def get_experiment_list(name=None):
     for path in glob.glob(os.path.join(config.experiments_dir,'[!_]*.py')):
         # get name of file and path
         file_name, ext = os.path.splitext(os.path.basename(path))
-        experiments[file_name] = path
+        with open(path) as experiment_file:
+            experiments[file_name] = json.load(experiment_file)
 
     if name == None:
-        return flask.jsonify({"experiments" : experiments.keys()})
+        return flask.jsonify({"experiments" : experiments})
 
     if name in experiments:
-        return "Experiment found"
+        #XXX: Don't send a python file in JSON
+        return flask.jsonify({"experiments" : experiments[name]})
     else:
         return "Experiment not found"
 
