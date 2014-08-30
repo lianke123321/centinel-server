@@ -34,13 +34,16 @@ def get_experiment_list(name=None):
     for path in glob.glob(os.path.join(config.experiments_dir,'[!_]*.py')):
         # get name of file and path
         file_name, ext = os.path.splitext(os.path.basename(path))
+        # read the result file
         with open(path) as experiment_file:
-            experiments[file_name] = json.load(experiment_file)
+            experiments[file_name] = experiment_file.read()
 
+    # send all the experiment files
     if name == None:
         return flask.jsonify({"experiments" : experiments})
 
     if name in experiments:
+        # send requested experiment file
         #XXX: Don't send a python file in JSON
         return flask.jsonify({"experiments" : experiments[name]})
     else:
@@ -53,10 +56,12 @@ def get_clients(name=None):
     with open(config.clients_file) as clients_fh:
         clients = json.load(clients_fh)
 
+    # send all the client details
     if name == None:
         return flask.jsonify(clients)
 
     if name in clients:
+        # send requested client details 
         return flask.jsonify(client[name])
     else:
         return "Client not found"
