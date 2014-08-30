@@ -13,9 +13,9 @@ app = flask.Flask("Centinel")
 def not_found(error):
     return flask.make_response(flask.jsonify({'error': 'Not found'}), 404)
 
-@app.route("/versions")
-def get_recommended_versions():
-    return flask.jsonify({"versions" : config.recommended_versions})
+@app.route("/version")
+def get_recommended_version():
+    return flask.jsonify({"version" : config.recommended_version})
 
 @app.route("/results", methods=['POST'])
 def submit_result():
