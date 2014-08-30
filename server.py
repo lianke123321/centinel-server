@@ -4,6 +4,8 @@ import flask
 import os
 import json
 
+from werkzeug import secure_filename
+
 app = flask.Flask("Centinel")
 
 @app.errorhandler(404)
@@ -16,20 +18,15 @@ def get_recommended_versions():
 
 @app.route("/results", methods=['POST'])
 def submit_result():
-    result = flask.request.json
-
-    # abort if message is empty of if there is no result file
-    if not result or "files" not in result:
+    # abort if there is no result file
+    if not flask.request.files:
         flask.abort(400)
 
-    #XXX: validate file and file name
-    data = result["files"]["data"]
-    file_name = result["files"]["file_name"]
-    file_path = os.path.join(config.results_dir, file_name)
-
     #XXX: overwrite file if exists?
-    with open(file_path, "w") as result_fh:
-        json.dump(data, result_fh)
+    result_file = flask.request.files['result']
+    file_name = secure_filename(result_file.filename)
+    file_path = os.path.join(config.results_dir, file_name)
+    result_file.save(file_path)
 
     return flask.jsonify({"status" : "success"}), 201
 
