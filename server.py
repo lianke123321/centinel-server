@@ -1,9 +1,16 @@
-from flask import Flask
-app = Flask(__name__)
+import config
+import flask
 
-@app.route("/")
-def hello():
-    return "Hello World!"
+app = flask.Flask(__name__)
+
+@app.route("/versions")
+def get_recommended_versions():
+    return flask.jsonify({"versions" : config.recommended_versions})
+
+@app.route("/results", method=['POST']):
+def submit_result():
+    if request.method == "POST":
+        pass
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
