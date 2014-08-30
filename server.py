@@ -17,6 +17,8 @@ def get_recommended_versions():
 @app.route("/results", methods=['POST'])
 def submit_result():
     result = flask.request.json
+
+    # abort if message is empty of if there is no timestamp
     if not result or "timestamp" not in result:
         flask.abort(400)
 
@@ -29,9 +31,9 @@ def submit_result():
         json.dump(result, result_fh)
 
     return flask.jsonify({"status":"success"}), 201
-    
+
 @app.route("/results")
-def get_result():
+def get_results():
     results = {}
 
     #XXX: cache the list of results?
@@ -50,7 +52,7 @@ def get_result():
 
 @app.route("/experiments")
 @app.route("/experiments/<name>")
-def get_experiment_list(name=None):
+def get_experiments(name=None):
     experiments = {}
 
     # look for experiments in experiments directory
@@ -86,14 +88,14 @@ def get_clients(name=None):
         return flask.jsonify(clients)
 
     if name in clients:
-        # send requested client details 
+        # send requested client details
         return flask.jsonify(client[name])
     else:
         # not found
         flask.abort(404)
 
 @app.route("/log", methods=["POST"])
-def log_file():
+def submit_log():
     pass
 
 if __name__ == "__main__":
