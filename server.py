@@ -29,9 +29,11 @@ def submit_result():
 
     return flask.jsonify({"status":"success"}), 201
     
-@app.route("/results", methods=['GET', 'POST'])
+@app.route("/results")
 def get_result():
     results = {}
+
+    #XXX: cache the list of results?
     # look in results directory
     for path in glob.glob(os.path.join(config.results_dir,'[!_]*.json')):
         # get name of file and path
@@ -45,10 +47,11 @@ def get_result():
 
     return flask.jsonify({"results" : results})
 
-@app.route("/experiments/")
+@app.route("/experiments")
 @app.route("/experiments/<name>")
 def get_experiment_list(name=None):
     experiments = {}
+
     # look for experiments in experiments directory
     for path in glob.glob(os.path.join(config.experiments_dir,'[!_]*.py')):
         # get name of file and path
@@ -69,10 +72,11 @@ def get_experiment_list(name=None):
         # not found
         flask.abort(404)
 
-@app.route("/clients/")
+@app.route("/clients")
 @app.route("/clients/<name>")
 def get_clients(name=None):
     clients = {}
+
     with open(config.clients_file) as clients_fh:
         clients = json.load(clients_fh)
 
