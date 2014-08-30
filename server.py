@@ -55,18 +55,20 @@ def get_experiments(name=None):
 
     # look in experiments directory
     for path in glob.glob(os.path.join(config.experiments_dir,'[!_]*.py')):
-        file_name, ext = os.path.splitext(os.path.basename(path))
-        with open(path) as experiment_file:
-            experiments[file_name] = experiment_file.read()
+        file_name, _ = os.path.splitext(os.path.basename(path))
+        experiments[file_name] = path
 
-    # send all the experiment files
+    # send all the experiment file names
     if name == None:
-        return flask.jsonify({"experiments" : experiments})
+        return flask.jsonify({"experiments" : experiments.keys()})
+
+    # this should never happen, but better be safe
+    if '..' in name or name.startswith('/'):
+        flask.abort(404)
 
     if name in experiments:
         # send requested experiment file
-        #XXX: Don't send a python file in JSON
-        return flask.jsonify({"experiments" : experiments[name]})
+        return flask.send_file(experiments[name])
     else:
         # not found
         flask.abort(404)
