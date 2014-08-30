@@ -10,28 +10,40 @@ app = flask.Flask(__name__)
 def not_found(error):
     return flask.make_response(flask.jsonify( { 'error': 'Not found' } ), 404)
 
-@app.route("/versions/")
+@app.route("/versions")
 def get_recommended_versions():
     return flask.jsonify({"versions" : config.recommended_versions})
 
-@app.route("/results", methods=['GET', 'POST'])
+@app.route("/results", methods=['POST'])
 def submit_result():
-    if flask.request.method == "POST":
-        pass
-    else:
-        results = {}
-        # look in results directory
-        for path in glob.glob(os.path.join(config.results_dir,'[!_]*.json')):
-            # get name of file and path
-            file_name, ext = os.path.splitext(os.path.basename(path))
-            # read the result file
-            with open(path) as result_file:
-                try:
-                    results[file_name] = json.load(result_file)
-                except Exception, e:
-                    print "Couldn't open file - %s" % (path)
+    result = flask.request.json
+    if not result or "timestamp" not in result:
+        flask.abort(400)
 
-        return flask.jsonify({"results" : results})
+    file_name = "result-%s.json" % (result["timestamp"])
+
+    #XXX: overwrite file if exists?
+    #XXX: validate file?
+    with open(file_name, "w") as result_fh:
+        json.dump(result, result_fh)
+
+    return flask.jsonify({"status":"success"}), 201
+    
+@app.route("/results", methods=['GET', 'POST'])
+def get_result():
+    results = {}
+    # look in results directory
+    for path in glob.glob(os.path.join(config.results_dir,'[!_]*.json')):
+        # get name of file and path
+        file_name, ext = os.path.splitext(os.path.basename(path))
+        # read the result file
+        with open(path) as result_file:
+            try:
+                results[file_name] = json.load(result_file)
+            except Exception, e:
+                print "Couldn't open file - %s" % (path)
+
+    return flask.jsonify({"results" : results})
 
 @app.route("/experiments/")
 @app.route("/experiments/<name>")
