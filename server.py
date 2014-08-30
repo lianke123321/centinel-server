@@ -76,8 +76,6 @@ def get_experiments(name=None):
 @app.route("/clients")
 @app.route("/clients/<name>")
 def get_clients(name=None):
-    clients = {}
-
     with open(config.clients_file) as clients_fh:
         clients = json.load(clients_fh)
 
