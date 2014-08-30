@@ -66,5 +66,9 @@ def get_clients(name=None):
     else:
         return "Client not found"
 
+@app.route("/log", methods=["POST"])
+def log_file():
+    pass
+
 if __name__ == "__main__":
     app.run(debug=True)
