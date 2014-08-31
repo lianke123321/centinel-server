@@ -1,6 +1,6 @@
 ### Centinel server
 
-The C&C server used to control Centinel nodes in the wild.
+The Server used to control Centinel nodes in the wild.
 
 ### Install and usage
 #### Debian

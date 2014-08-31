@@ -6,9 +6,11 @@ import json
 import config
 
 from werkzeug import secure_filename
+from flask.ext.httpauth import HTTPBasicAuth
 from passlib.apps import custom_app_context as pwd_context
 
 app = flask.Flask("Centinel")
+auth = HTTPBasicAuth()
 
 @app.errorhandler(404)
 def not_found(error):
@@ -23,6 +25,7 @@ def get_recommended_version():
     return flask.jsonify({"version" : config.recommended_version})
 
 @app.route("/results", methods=['POST'])
+@auth.login_required
 def submit_result():
     # abort if there is no result file
     if not flask.request.files:
@@ -38,6 +41,7 @@ def submit_result():
     return flask.jsonify({"status" : "success"}), 201
 
 @app.route("/results")
+@auth.login_required
 def get_results():
     results = {}
 
@@ -93,6 +97,7 @@ def get_clients(name=None):
         flask.abort(404)
 
 @app.route("/log", methods=["POST"])
+@auth.login_required
 def submit_log():
     pass
 
@@ -115,6 +120,11 @@ def register():
         json.dump(app.clients, clients_fh)
 
     return flask.jsonify({"status" : "success"}), 201
+
+@auth.verify_password
+def verify_password(username, password):
+    user = app.clients.get(username)
+    return user and pwd_context.verify(password, user['hash'])
 
 if __name__ == "__main__":
     app.clients = {}
