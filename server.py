@@ -57,7 +57,7 @@ def get_results():
             try:
                 results[file_name] = json.load(result_file)
             except Exception, e:
-                print "Couldn't open file - %s" % (path)
+                print "Couldn't open file - %s - %s" % (path, str(e))
 
     return flask.jsonify({"results" : results})
 
@@ -109,6 +109,9 @@ def submit_log():
 @app.route("/register", methods=["POST"])
 def register():
     #XXX: use a captcha to prevent spam?
+    if not flask.request.json:
+        flask.abort(404)
+
     username = flask.request.json.get('username')
     password = flask.request.json.get('password')
 
