@@ -88,6 +88,7 @@ def get_experiments(name=None):
 
 @app.route("/clients")
 @app.route("/clients/<name>")
+@auth.login_required
 def get_clients(name=None):
     # send all the client details
     if name == None:
