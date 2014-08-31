@@ -6,12 +6,17 @@ import json
 import config
 
 from werkzeug import secure_filename
+from passlib.apps import custom_app_context as pwd_context
 
 app = flask.Flask("Centinel")
 
 @app.errorhandler(404)
 def not_found(error):
     return flask.make_response(flask.jsonify({'error': 'Not found'}), 404)
+
+@app.errorhandler(400)
+def bad_request(error):
+    return flask.make_response(flask.jsonify({'error': 'Bad request'}), 400)
 
 @app.route("/version")
 def get_recommended_version():
@@ -76,14 +81,11 @@ def get_experiments(name=None):
 @app.route("/clients")
 @app.route("/clients/<name>")
 def get_clients(name=None):
-    with open(config.clients_file) as clients_fh:
-        clients = json.load(clients_fh)
-
     # send all the client details
     if name == None:
-        return flask.jsonify(clients)
+        return flask.jsonify(app.clients.keys())
 
-    if name in clients:
+    if name in app.clients:
         # send requested client details
         return flask.jsonify(client[name])
     else:
@@ -96,7 +98,29 @@ def submit_log():
 
 @app.route("/register", methods=["POST"])
 def register():
-    pass
+    username = flask.request.json.get('username')
+    password = flask.request.json.get('password')
+
+    if not username or not password:
+        flask.abort(400)
+
+    if username in app.clients:
+        flask.abort(400)
+
+    app.clients[username] = {
+        'hash': pwd_context.encrypt(password)
+    }
+
+    with open(config.clients_file, "w") as clients_fh:
+        json.dump(app.clients, clients_fh)
+
+    return flask.jsonify({"status" : "success"}), 201
 
 if __name__ == "__main__":
+    app.clients = {}
+
+    if os.path.isfile(config.clients_file):
+        with open(config.clients_file) as clients_fh:
+            app.clients = json.load(clients_fh)
+
     app.run(debug=True)
