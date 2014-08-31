@@ -103,6 +103,7 @@ def submit_log():
 
 @app.route("/register", methods=["POST"])
 def register():
+    #XXX: use a captcha to prevent spam?
     username = flask.request.json.get('username')
     password = flask.request.json.get('password')
 
@@ -127,6 +128,7 @@ def verify_password(username, password):
     return user and pwd_context.verify(password, user['hash'])
 
 if __name__ == "__main__":
+    #XXX: use a db for this
     app.clients = {}
 
     if os.path.isfile(config.clients_file):
