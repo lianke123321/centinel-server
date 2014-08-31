@@ -3,9 +3,13 @@
 The C&C server used to control Centinel nodes in the wild.
 
 ### Install and usage
-    $ pip install flask
+#### Debian
+    $ apt-get install python-flask python-passlib
     $ python server.py
-    # go to http://127.0.0.1:5000/
+    
+#### OSX
+    $ pip install flask passlib
+    $ python server.py
 
 ### Supported platforms
     * Unix
