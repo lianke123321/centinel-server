@@ -20,6 +20,10 @@ def not_found(error):
 def bad_request(error):
     return flask.make_response(flask.jsonify({'error': 'Bad request'}), 400)
 
+@auth.error_handler
+def unauthorized():
+    return flask.make_response(flask.jsonify({'error': 'Unauthorized access'}), 401)
+
 @app.route("/version")
 def get_recommended_version():
     return flask.jsonify({"version" : config.recommended_version})
