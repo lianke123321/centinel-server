@@ -87,19 +87,10 @@ def get_experiments(name=None):
         flask.abort(404)
 
 @app.route("/clients")
-@app.route("/clients/<name>")
 @auth.login_required
-def get_clients(name=None):
+def get_clients():
     # send all the client details
-    if name == None:
-        return flask.jsonify(app.clients.keys())
-
-    if name in app.clients:
-        # send requested client details
-        return flask.jsonify(client[name])
-    else:
-        # not found
-        flask.abort(404)
+    return flask.jsonify({"clients": app.clients.keys()})
 
 @app.route("/log", methods=["POST"])
 @auth.login_required
