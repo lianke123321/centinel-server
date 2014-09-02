@@ -7,10 +7,27 @@ import config
 
 from werkzeug import secure_filename
 from flask.ext.httpauth import HTTPBasicAuth
+from flask.ext.sqlalchemy import SQLAlchemy
+
 from passlib.apps import custom_app_context as pwd_context
 
 app = flask.Flask("Centinel")
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+
 auth = HTTPBasicAuth()
+db = SQLAlchemy(app)
+
+class Client(db.Model):
+    __tablename__ = 'clients'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(32), index=True)
+    password_hash = db.Column(db.String(64))
+
+    def hash_password(self, password):
+        self.password_hash = pwd_context.encrypt(password)
+
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password_hash)
 
 @app.errorhandler(404)
 def not_found(error):
@@ -90,7 +107,8 @@ def get_experiments(name=None):
 @auth.login_required
 def get_clients():
     # send all the client details
-    return flask.jsonify({"clients": app.clients.keys()})
+    clients = Client.query.all()
+    return flask.jsonify([x.username for x in clients])
 
 @app.route("/log", methods=["POST"])
 @auth.login_required
@@ -108,30 +126,24 @@ def register():
 
     if not username or not password:
         flask.abort(400)
-
-    if username in app.clients:
+    clients = Client.query.filter_by(username='username')
+    if clients:
         flask.abort(400)
-
-    app.clients[username] = {
-        'hash': pwd_context.encrypt(password)
-    }
-
-    with open(config.clients_file, "w") as clients_fh:
-        json.dump(app.clients, clients_fh)
-
+    user = Client(username=username)
+    user.hash_password(password)
+    db.session.add(user)
+    db.session.commit()
     return flask.jsonify({"status" : "success"}), 201
 
 @auth.verify_password
 def verify_password(username, password):
-    user = app.clients.get(username)
-    return user and pwd_context.verify(password, user['hash'])
+
+    user = Client.query.filter_by(username=username).first()
+    if not user or not user.verify_password(password):
+        return False
+    return True
 
 if __name__ == "__main__":
-    #XXX: use a db for this
-    app.clients = {}
-
-    if os.path.isfile(config.clients_file):
-        with open(config.clients_file) as clients_fh:
-            app.clients = json.load(clients_fh)
-
+    if not os.path.exists('db.sqlite'):
+        db.create_all()
     app.run(debug=True)
