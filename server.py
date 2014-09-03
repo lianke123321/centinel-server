@@ -12,7 +12,10 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from passlib.apps import custom_app_context as pwd_context
 
 app = flask.Flask("Centinel")
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+#Disable testing and debugging
+#app.config.from_object('config.configuration')
+#For testing and debugging
+app.config.from_object('config.devConfig')
 
 auth = HTTPBasicAuth()
 db = SQLAlchemy(app)
@@ -20,7 +23,7 @@ db = SQLAlchemy(app)
 class Client(db.Model):
     __tablename__ = 'clients'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(32), index=True)
+    username = db.Column(db.String(36), index=True) #uuid length=36
     password_hash = db.Column(db.String(64))
 
     def hash_password(self, password):
@@ -106,7 +109,6 @@ def get_experiments(name=None):
 @app.route("/clients")
 @auth.login_required
 def get_clients():
-    # send all the client details
     clients = Client.query.all()
     return flask.jsonify([x.username for x in clients])
 
@@ -126,8 +128,8 @@ def register():
 
     if not username or not password:
         flask.abort(400)
-    clients = Client.query.filter_by(username='username')
-    if clients:
+    client = Client.query.filter_by(username=username).first()
+    if client is not None:
         flask.abort(400)
     user = Client(username=username)
     user.hash_password(password)
