@@ -3,12 +3,14 @@ import getpass
 
 class configuration(object):
 	SQLALCHEMY_DATABASE_URI = 'sqlite:///db.sqlite'
+	DEBUG = False
+	TESTING = False
 
-class devConfig(object):
-	SQLALCHEMY_DATABASE_URI = 'sqlite:///db.sqlite'
-	TESTING = True
+class developmentConfig(configuration):
 	DEBUG = True
 
+class testingConfig(configuration):
+	TESTING = True
 
 # misc
 recommended_version = 1.1
