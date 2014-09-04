@@ -107,7 +107,7 @@ def get_experiments(name=None):
 @auth.login_required
 def get_clients():
     clients = Client.query.all()
-    return flask.jsonify([x.username for x in clients])
+    return flask.jsonify(clients=[client.username for client in clients])
 
 @app.route("/log", methods=["POST"])
 @auth.login_required
