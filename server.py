@@ -12,7 +12,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from passlib.apps import custom_app_context as pwd_context
 
 app = flask.Flask("Centinel")
-app.config.from_object('config.developmentConfig')
 
 auth = HTTPBasicAuth()
 db = SQLAlchemy(app)
@@ -146,4 +145,5 @@ def verify_password(username, password):
 if __name__ == "__main__":
     if not os.path.exists('db.sqlite'):
         db.create_all()
+    app.config['SQLALCHEMY_DATABASE_URI'] = config.sqlite_db
     app.run(debug=True)
