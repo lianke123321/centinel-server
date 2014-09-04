@@ -11,7 +11,8 @@ class developmentConfig(configuration):
 
 class testingConfig(configuration):
 	TESTING = True
-
+	SQLALCHEMY_DATABASE_URI = 'sqlite:///test.sqlite'
+	
 # misc
 recommended_version = 1.1
 

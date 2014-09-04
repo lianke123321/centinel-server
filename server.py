@@ -15,7 +15,7 @@ app = flask.Flask("Centinel")
 #Disable testing and debugging
 #app.config.from_object('config.configuration')
 #For testing and debugging
-app.config.from_object('config.devConfig')
+app.config.from_object('config.developmentConfig')
 
 auth = HTTPBasicAuth()
 db = SQLAlchemy(app)
