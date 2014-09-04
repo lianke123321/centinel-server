@@ -140,11 +140,8 @@ def register():
 
 @auth.verify_password
 def verify_password(username, password):
-
     user = Client.query.filter_by(username=username).first()
-    if not user or not user.verify_password(password):
-        return False
-    return True
+    return user and user.verify_password(password)
 
 if __name__ == "__main__":
     if not os.path.exists('db.sqlite'):
