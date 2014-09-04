@@ -23,8 +23,9 @@ class Client(db.Model):
     username = db.Column(db.String(36), index=True) #uuid length=36
     password_hash = db.Column(db.String(64))
 
-    def hash_password(self, password):
-        self.password_hash = pwd_context.encrypt(password)
+    def __init__(self, username, password):
+        self.username = username
+        self.password = pwd_context.encrypt(password)
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
@@ -125,13 +126,16 @@ def register():
 
     if not username or not password:
         flask.abort(400)
+
     client = Client.query.filter_by(username=username).first()
+
     if client is not None:
         flask.abort(400)
-    user = Client(username=username)
-    user.hash_password(password)
+
+    user = Client(username=username, password=password)
     db.session.add(user)
     db.session.commit()
+
     return flask.jsonify({"status" : "success"}), 201
 
 @auth.verify_password
