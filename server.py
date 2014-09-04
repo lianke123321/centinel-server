@@ -12,9 +12,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from passlib.apps import custom_app_context as pwd_context
 
 app = flask.Flask("Centinel")
-#Disable testing and debugging
-#app.config.from_object('config.configuration')
-#For testing and debugging
 app.config.from_object('config.developmentConfig')
 
 auth = HTTPBasicAuth()
