@@ -5,6 +5,7 @@ from flask.ext.testing import TestCase
 from server import app, db, Client
 import config
 #for tests
+import os
 from cStringIO import StringIO
 import unittest
 import uuid
@@ -59,8 +60,21 @@ class MyTest(TestCase):
         self.assert_200(response)
 
     def test_results_POST(self):
-		pass 
-    
+        url = '/results'
+        with open('testfile','wb') as test_file:
+            test_file.write('Hello Centinels')
+            test_file.close()
+        with open('testfile','r') as test_file:
+            files = {'result' : test_file}
+            response = self.client.post(url, data=files, \
+                headers={'Authorization': 'Basic ' + \
+                base64.b64encode(self.testUsername + ":" + self.testPassword)})
+            test_file.close()
+        self.assert_status(response, 201)
+        assert (os.path.isfile(os.path.join(config.centinel_home, 'results/testfile')))
+        os.remove(os.path.join(config.centinel_home, 'results/testfile'))
+        os.remove('testfile')
+
     def test_experiments(self):
     	url = '/experiments'
     	response = self.client.get(url)
