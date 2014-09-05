@@ -8,11 +8,9 @@ import config
 from werkzeug import secure_filename
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.sqlalchemy import SQLAlchemy
-
 from passlib.apps import custom_app_context as pwd_context
 
 app = flask.Flask("Centinel")
-
 auth = HTTPBasicAuth()
 db = SQLAlchemy(app)
 
@@ -24,7 +22,7 @@ class Client(db.Model):
 
     def __init__(self, username, password):
         self.username = username
-        self.password = pwd_context.encrypt(password)
+        self.password_hash = pwd_context.encrypt(password)
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
@@ -143,7 +141,7 @@ def verify_password(username, password):
     return user and user.verify_password(password)
 
 if __name__ == "__main__":
-    if not os.path.exists('db.sqlite'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % (config.sqlite_db)
+    if not os.path.exists(config.sqlite_db):
         db.create_all()
-    app.config['SQLALCHEMY_DATABASE_URI'] = config.sqlite_db
     app.run(debug=True)

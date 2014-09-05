@@ -13,4 +13,4 @@ results_dir         = os.path.join(centinel_home, 'results')
 experiments_dir     = os.path.join(centinel_home, 'experiments')
 
 # sqlite
-sqlite_db = 'sqlite:///db.sqlite'
+sqlite_db = os.path.join(centinel_home, 'db.sqlite')
