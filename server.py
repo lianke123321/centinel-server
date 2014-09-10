@@ -14,6 +14,7 @@ app = flask.Flask("Centinel")
 auth = HTTPBasicAuth()
 db = SQLAlchemy(app)
 
+
 class Client(db.Model):
     __tablename__ = 'clients'
     id = db.Column(db.Integer, primary_key=True)
@@ -52,9 +53,13 @@ def submit_result():
 
     #XXX: overwrite file if exists?
     result_file = flask.request.files['result']
+    client_dir = flask.request.authorization.username
 
+    # we assume that the directory was created when the user
+    # registered
     file_name = secure_filename(result_file.filename)
-    file_path = os.path.join(config.results_dir, file_name)
+    file_path = os.path.join(config.results_dir, client_dir, file_name)
+
     result_file.save(file_path)
 
     return flask.jsonify({"status" : "success"}), 201
@@ -65,8 +70,12 @@ def get_results():
     results = {}
 
     #XXX: cache the list of results?
-    # look in results directory
-    for path in glob.glob(os.path.join(config.results_dir,'[!_]*.json')):
+    #XXX: let the admin query any results file here?
+    # look in results directory for the user's results (we assume this
+    # directory was created when the user registered)
+    username = flask.request.authorization.username
+    user_dir = os.path.join(config.results_dir, username, '[!_]*.json')
+    for path in glob.glob(user_dir):
         file_name, ext = os.path.splitext(os.path.basename(path))
         with open(path) as result_file:
             try:
@@ -81,8 +90,11 @@ def get_results():
 def get_experiments(name=None):
     experiments = {}
 
-    # look in experiments directory
-    for path in glob.glob(os.path.join(config.experiments_dir,'[!_]*.py')):
+    #XXX: create an option to pull down all?
+    # look in experiments directory for each user
+    username = flask.request.authorization.username
+    user_dir = os.path.join(config.experiments_dir, username, '[!_]*.py')
+    for path in glob.glob(user_dir):
         file_name, _ = os.path.splitext(os.path.basename(path))
         experiments[file_name] = path
 
@@ -104,13 +116,29 @@ def get_experiments(name=None):
 @app.route("/clients")
 @auth.login_required
 def get_clients():
+    #XXX: ensure that only the admin can make this call
     clients = Client.query.all()
     return flask.jsonify(clients=[client.username for client in clients])
 
 @app.route("/log", methods=["POST"])
 @auth.login_required
 def submit_log():
-    pass
+    # abort if there is no log file
+    if not flask.request.files:
+        flask.abort(400)
+
+    #XXX: overwrite file if exists?
+    result_file = flask.request.files['log']
+    client_dir = flask.request.authorization.username
+
+    # we assume that the directory was created when the user
+    # registered
+    file_name = secure_filename(result_file.filename)
+    file_path = os.path.join(config.log_dir, client_dir, file_name)
+
+    result_file.save(file_path)
+
+    return flask.jsonify({"status" : "success"}), 201
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -132,6 +160,10 @@ def register():
     user = Client(username=username, password=password)
     db.session.add(user)
     db.session.commit()
+
+    os.makedirs(os.path.join(config.results_dir, username))
+    os.makedirs(os.path.join(config.experiments_dir, username))
+    os.makedirs(os.path.join(config.log_dir, username))
 
     return flask.jsonify({"status" : "success"}), 201
 
