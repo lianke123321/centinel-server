@@ -33,23 +33,18 @@ class Client(db.Model):
 def not_found(error):
     return flask.make_response(flask.jsonify({'error': 'Not found'}), 404)
 
-
 @app.errorhandler(400)
 def bad_request(error):
     return flask.make_response(flask.jsonify({'error': 'Bad request'}), 400)
 
-
 @auth.error_handler
 def unauthorized():
-    return flask.make_response(flask.jsonify({'error':
-                                              'Unauthorized access'}),
-                               401)
-
+    json_resp = flask.jsonify({'error': 'Unauthorized access'})
+    return flask.make_response(json_resp, 401)
 
 @app.route("/version")
 def get_recommended_version():
     return flask.jsonify({"version": config.recommended_version})
-
 
 @app.route("/results", methods=['POST'])
 @auth.login_required
@@ -71,7 +66,6 @@ def submit_result():
 
     return flask.jsonify({"status": "success"}), 201
 
-
 @app.route("/results")
 @auth.login_required
 def get_results():
@@ -92,7 +86,6 @@ def get_results():
                 print "Couldn't open file - %s - %s" % (path, str(e))
 
     return flask.jsonify({"results": results})
-
 
 @app.route("/experiments")
 @app.route("/experiments/<name>")
@@ -122,7 +115,6 @@ def get_experiments(name=None):
         # not found
         flask.abort(404)
 
-
 @app.route("/clients")
 @auth.login_required
 def get_clients():
@@ -151,7 +143,6 @@ def submit_log():
 
     return flask.jsonify({"status": "success"}), 201
 
-
 @app.route("/register", methods=["POST"])
 def register():
     # TODO: use a captcha to prevent spam?
@@ -179,11 +170,11 @@ def register():
 
     return flask.jsonify({"status": "success"}), 201
 
-
 @auth.verify_password
 def verify_password(username, password):
     user = Client.query.filter_by(username=username).first()
     return user and user.verify_password(password)
+
 
 if __name__ == "__main__":
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % (config.sqlite_db)
