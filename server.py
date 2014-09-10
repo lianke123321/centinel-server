@@ -127,19 +127,19 @@ def get_clients():
 @auth.login_required
 def submit_log():
     # abort if there is no log file
-    if not flask.request.files:
-        flask.abort(400)
+    # if not flask.request.files:
+    #     flask.abort(400)
 
-    # TODO: overwrite file if exists?
-    result_file = flask.request.files['log']
-    client_dir = flask.request.authorization.username
+    # # TODO: overwrite file if exists?
+    # result_file = flask.request.files['log']
+    # client_dir = flask.request.authorization.username
 
-    # we assume that the directory was created when the user
-    # registered
-    file_name = secure_filename(result_file.filename)
-    file_path = os.path.join(config.log_dir, client_dir, file_name)
+    # # we assume that the directory was created when the user
+    # # registered
+    # file_name = secure_filename(result_file.filename)
+    # file_path = os.path.join(config.log_dir, client_dir, file_name)
 
-    result_file.save(file_path)
+    # result_file.save(file_path)
 
     return flask.jsonify({"status": "success"}), 201
 
