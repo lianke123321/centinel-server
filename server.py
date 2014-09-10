@@ -18,7 +18,7 @@ db = SQLAlchemy(app)
 class Client(db.Model):
     __tablename__ = 'clients'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(36), index=True) #uuid length=36
+    username = db.Column(db.String(36), index=True)  # uuid length=36
     password_hash = db.Column(db.String(64))
 
     def __init__(self, username, password):
@@ -28,21 +28,28 @@ class Client(db.Model):
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
 
+
 @app.errorhandler(404)
 def not_found(error):
     return flask.make_response(flask.jsonify({'error': 'Not found'}), 404)
+
 
 @app.errorhandler(400)
 def bad_request(error):
     return flask.make_response(flask.jsonify({'error': 'Bad request'}), 400)
 
+
 @auth.error_handler
 def unauthorized():
-    return flask.make_response(flask.jsonify({'error': 'Unauthorized access'}), 401)
+    return flask.make_response(flask.jsonify({'error':
+                                              'Unauthorized access'}),
+                               401)
+
 
 @app.route("/version")
 def get_recommended_version():
-    return flask.jsonify({"version" : config.recommended_version})
+    return flask.jsonify({"version": config.recommended_version})
+
 
 @app.route("/results", methods=['POST'])
 @auth.login_required
@@ -51,7 +58,7 @@ def submit_result():
     if not flask.request.files:
         flask.abort(400)
 
-    #XXX: overwrite file if exists?
+    # TODO: overwrite file if exists?
     result_file = flask.request.files['result']
     client_dir = flask.request.authorization.username
 
@@ -62,15 +69,16 @@ def submit_result():
 
     result_file.save(file_path)
 
-    return flask.jsonify({"status" : "success"}), 201
+    return flask.jsonify({"status": "success"}), 201
+
 
 @app.route("/results")
 @auth.login_required
 def get_results():
     results = {}
 
-    #XXX: cache the list of results?
-    #XXX: let the admin query any results file here?
+    # TODO: cache the list of results?
+    # TODO: let the admin query any results file here?
     # look in results directory for the user's results (we assume this
     # directory was created when the user registered)
     username = flask.request.authorization.username
@@ -83,14 +91,15 @@ def get_results():
             except Exception, e:
                 print "Couldn't open file - %s - %s" % (path, str(e))
 
-    return flask.jsonify({"results" : results})
+    return flask.jsonify({"results": results})
+
 
 @app.route("/experiments")
 @app.route("/experiments/<name>")
 def get_experiments(name=None):
     experiments = {}
 
-    #XXX: create an option to pull down all?
+    # TODO: create an option to pull down all?
     # look in experiments directory for each user
     username = flask.request.authorization.username
     user_dir = os.path.join(config.experiments_dir, username, '[!_]*.py')
@@ -99,8 +108,8 @@ def get_experiments(name=None):
         experiments[file_name] = path
 
     # send all the experiment file names
-    if name == None:
-        return flask.jsonify({"experiments" : experiments.keys()})
+    if name is None:
+        return flask.jsonify({"experiments": experiments.keys()})
 
     # this should never happen, but better be safe
     if '..' in name or name.startswith('/'):
@@ -113,12 +122,14 @@ def get_experiments(name=None):
         # not found
         flask.abort(404)
 
+
 @app.route("/clients")
 @auth.login_required
 def get_clients():
-    #XXX: ensure that only the admin can make this call
+    # TODO: ensure that only the admin can make this call
     clients = Client.query.all()
     return flask.jsonify(clients=[client.username for client in clients])
+
 
 @app.route("/log", methods=["POST"])
 @auth.login_required
@@ -127,7 +138,7 @@ def submit_log():
     if not flask.request.files:
         flask.abort(400)
 
-    #XXX: overwrite file if exists?
+    # TODO: overwrite file if exists?
     result_file = flask.request.files['log']
     client_dir = flask.request.authorization.username
 
@@ -138,11 +149,12 @@ def submit_log():
 
     result_file.save(file_path)
 
-    return flask.jsonify({"status" : "success"}), 201
+    return flask.jsonify({"status": "success"}), 201
+
 
 @app.route("/register", methods=["POST"])
 def register():
-    #XXX: use a captcha to prevent spam?
+    # TODO: use a captcha to prevent spam?
     if not flask.request.json:
         flask.abort(404)
 
@@ -165,7 +177,8 @@ def register():
     os.makedirs(os.path.join(config.experiments_dir, username))
     os.makedirs(os.path.join(config.log_dir, username))
 
-    return flask.jsonify({"status" : "success"}), 201
+    return flask.jsonify({"status": "success"}), 201
+
 
 @auth.verify_password
 def verify_password(username, password):
