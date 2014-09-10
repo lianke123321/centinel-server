@@ -19,13 +19,12 @@ class MyTest(TestCase):
 
     def create_app(self):
 		self.app = Flask(__name__)
-		self.app.config.from_object('config.testingConfig')
+		self.app.config['TESTING'] = True
 		return app
 
     def setUp(self):
     	db.create_all()
-    	user = Client(username=self.testUsername)
-    	user.hash_password(self.testPassword)
+    	user = Client(username=self.testUsername,password=self.testPassword)
     	db.session.add(user)
     	db.session.commit()
 
@@ -40,7 +39,12 @@ class MyTest(TestCase):
                 'Authorization': 'Basic ' + base64.b64encode(username + \
                 ":" + password)
             }
-        )	
+        )
+    def check_broken_auth(self, url):
+        response = self.client.get(url)
+        self.assert_401(response)
+        self.assertTrue('WWW-Authenticate' in response.headers)
+        self.assertTrue('Basic' in response.headers['WWW-Authenticate'])
 
     def test_version(self):
     	url = '/version'
@@ -51,10 +55,7 @@ class MyTest(TestCase):
     def test_results_GET(self):
     	url = '/results'	
     	#Check for broken auth ->
-        response = self.client.get(url)
-        self.assert_401(response)
-        self.assertTrue('WWW-Authenticate' in response.headers)
-        self.assertTrue('Basic' in response.headers['WWW-Authenticate'])
+        self.check_broken_auth(url)
         #Check working auth ->
         response = self.open_with_auth(url,'GET',self.testUsername, self.testPassword)
         self.assert_200(response)
@@ -88,10 +89,7 @@ class MyTest(TestCase):
     def test_clients(self):
     	url = '/clients'
     	#Check for broken auth ->
-        response = self.client.get(url)
-        self.assert_401(response)
-        self.assertTrue('WWW-Authenticate' in response.headers)
-        self.assertTrue('Basic' in response.headers['WWW-Authenticate'])
+        self.check_broken_auth(url)
         #Check working auth ->
         response = self.open_with_auth(url,'GET',self.testUsername, self.testPassword)
         self.assert_200(response)
