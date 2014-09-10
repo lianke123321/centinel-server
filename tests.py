@@ -11,6 +11,7 @@ import unittest
 import uuid
 import base64
 import io
+from passlib.apps import custom_app_context as pwd_context
 
 class MyTest(TestCase):
 
@@ -64,17 +65,18 @@ class MyTest(TestCase):
         url = '/results'
         with open('testfile','wb') as test_file:
             test_file.write('Hello Centinels')
-            test_file.close()
         with open('testfile','r') as test_file:
+            headers={
+                'Authorization': 'Basic ' + base64.b64encode(self.testUsername + \
+                ":" + self.testPassword)
+            }
             files = {'result' : test_file}
-            response = self.client.post(url, data=files, \
-                headers={'Authorization': 'Basic ' + \
-                base64.b64encode(self.testUsername + ":" + self.testPassword)})
-            test_file.close()
+            response = self.client.post(url, data=files, headers=headers)
         self.assert_status(response, 201)
-        assert (os.path.isfile(os.path.join(config.centinel_home, 'results/testfile')))
+        self.assertTrue(os.path.isfile(os.path.join(config.centinel_home, 'results/testfile')))
         os.remove(os.path.join(config.centinel_home, 'results/testfile'))
         os.remove('testfile')
+        ###X: Testing encoding mismatch?
 
     def test_experiments(self):
         url = '/experiments'
@@ -108,6 +110,11 @@ class MyTest(TestCase):
             content_type='application/json')
         self.assertEquals(response.json, {"status" : "success"})
         self.assert_status(response,201)
+        client = Client.query.filter_by(username=testUsername).first()
+        self.assertEquals(client.username, testUsername)
+        self.assertTrue(client.verify_password(testPassword))
+
+
 
 
 if __name__ == '__main__':
