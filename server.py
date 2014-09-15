@@ -123,26 +123,6 @@ def get_clients():
     return flask.jsonify(clients=[client.username for client in clients])
 
 
-@app.route("/log", methods=["POST"])
-@auth.login_required
-def submit_log():
-    # abort if there is no log file
-    # if not flask.request.files:
-    #     flask.abort(400)
-
-    # # TODO: overwrite file if exists?
-    # result_file = flask.request.files['log']
-    # client_dir = flask.request.authorization.username
-
-    # # we assume that the directory was created when the user
-    # # registered
-    # file_name = secure_filename(result_file.filename)
-    # file_path = os.path.join(config.log_dir, client_dir, file_name)
-
-    # result_file.save(file_path)
-
-    return flask.jsonify({"status": "success"}), 201
-
 @app.route("/register", methods=["POST"])
 def register():
     # TODO: use a captcha to prevent spam?
@@ -166,7 +146,6 @@ def register():
 
     os.makedirs(os.path.join(config.results_dir, username))
     os.makedirs(os.path.join(config.experiments_dir, username))
-    os.makedirs(os.path.join(config.log_dir, username))
 
     return flask.jsonify({"status": "success"}), 201
 

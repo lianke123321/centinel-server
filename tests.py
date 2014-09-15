@@ -97,10 +97,6 @@ class MyTest(TestCase):
         self.assert_200(response)
         self.assertEquals(response.json, {"clients" : [self.testUsername]})
 
-    def test_log(self):
-        #XXX: TODO
-        pass
-    
     def test_register(self):
         url = '/register'
         testUsername = str(uuid.uuid4())
@@ -113,9 +109,6 @@ class MyTest(TestCase):
         client = Client.query.filter_by(username=testUsername).first()
         self.assertEquals(client.username, testUsername)
         self.assertTrue(client.verify_password(testPassword))
-
-
-
 
 if __name__ == '__main__':
     unittest.main()
