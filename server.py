@@ -16,7 +16,14 @@ app = flask.Flask("Centinel")
 auth = HTTPBasicAuth()
 db = SQLAlchemy(app)
 
-reader = geoip2.database.Reader(config.maxmind_db)
+try:
+    reader = geoip2.database.Reader(config.maxmind_db)
+except (geoip2.database.maxminddb.InvalidDatabaseError, IOError):
+    print ("You appear to have an error in your geolocation database.\n"
+           "Your database is either corrupt or does not exist\n"
+           "until you download a new copy, geolocation functionality\n"
+           "will be disabled")
+    reader = None
 
 class Client(db.Model):
     __tablename__ = 'clients'
@@ -159,7 +166,10 @@ def geolocate_client():
     ip_aggr = ".".join(ip.split(".")[:3]) + ".0/24"
     try:
         country = reader.country(ip).country.iso_code
-    except geoip2.errors.AddressNotFoundError or geoip2.errors.GeoIP2Error:
+    # if we have disabled geoip support, reader should be None, so the
+    # exception should be triggered
+    except (geoip2.errors.AddressNotFoundError,
+            geoip2.errors.GeoIP2Error, AttributeError):
         country = '--'
     return flask.jsonify({"ip": ip_aggr, "country": country})
 
