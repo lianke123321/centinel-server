@@ -217,18 +217,33 @@ def register():
     if not flask.request.json:
         flask.abort(404)
 
-    username = flask.request.json.get('username')
-    password = flask.request.json.get('password')
+    ip = flask.request.remote_addr
+
+    # parse the info we need out of the json
+    reg_kwargs = flask.request.get_json()
+    username = reg_kwargs.get('username')
+    password = reg_kwargs.get('password')
+    # if the user didn't specify which country they were coming from,
+    # pull it from geolocation on their ip
+    country = reg_kwargs.get('country')
+    if country is None or (len(country) != 2):
+        reg_kwargs['country'] = get_country_from_ip(ip)
+    reg_kwargs['ip'] = ip
+    reg_kwargs['last_seen'] = datetime.now()
 
     if not username or not password:
         flask.abort(400)
 
     client = Client.query.filter_by(username=username).first()
-
     if client is not None:
         flask.abort(400)
 
-    user = Client(username=username, password=password)
+    # parse out the pieces from the client to add to the server
+
+    # Note: we don't let the user specify their roles. Role management
+    # has to be done on the backend itself
+    user = Client(username=username, password=password,
+                  roles=['client'], kwargs=reg_kwargs)
     db.session.add(user)
     db.session.commit()
 
