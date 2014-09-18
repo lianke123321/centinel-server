@@ -2,7 +2,6 @@ import flask
 import geoip2.errors
 import geoip2.database
 import glob
-import IPy
 import json
 import os
 
@@ -17,7 +16,7 @@ app = flask.Flask("Centinel")
 auth = HTTPBasicAuth()
 db = SQLAlchemy(app)
 
-reader = geoip2.database.Reader('misc/GeoLite2-Country.mmdb')
+reader = geoip2.database.Reader(config.maxmind_db)
 
 class Client(db.Model):
     __tablename__ = 'clients'
@@ -156,13 +155,13 @@ def register():
 @app.route("/geolocation")
 def geolocate_client():
     # get the ip and aggregate to the /24
-    ip = IPy.IP(flask.request.remote_addr)
-    ip = str(ip.make_net("255.255.255.0"))
+    ip = flask.request.remote_addr
+    ip_aggr = ".".join(ip.split(".")[:3]) + ".0/24"
     try:
-        country = reader.country(flask.request.remote_addr).country.iso_code
+        country = reader.country(ip).country.iso_code
     except geoip2.errors.AddressNotFoundError or geoip2.errors.GeoIP2Error:
         country = '--'
-    return flask.jsonify({"ip": ip, "country": country})
+    return flask.jsonify({"ip": ip_aggr, "country": country})
 
 @auth.verify_password
 def verify_password(username, password):
@@ -177,4 +176,4 @@ if __name__ == "__main__":
         if not os.path.exists(sql_dir):
             os.makedirs(sql_dir)
         db.create_all()
-    app.run(debug=True)    
+    app.run(debug=True)
