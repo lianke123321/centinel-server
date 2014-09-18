@@ -41,9 +41,10 @@ def get_country_from_ip(ip):
 # This is a table to create a mapping between users and their roles
 # (permissions)
 roles_tab = db.Table('roles_tab',
-                 db.Column('user_id', db.Integer, db.ForeignKey('clients.id')),
-                 db.Column('role_id', db.Integer, db.ForeignKey('role.id'))
-)
+                     db.Column('user_id', db.Integer,
+                               db.ForeignKey('clients.id')),
+                     db.Column('role_id', db.Integer,
+                               db.ForeignKey('role.id')))
 
 
 class Client(db.Model):
