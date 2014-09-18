@@ -25,6 +25,18 @@ except (geoip2.database.maxminddb.InvalidDatabaseError, IOError):
            "will be disabled")
     reader = None
 
+
+def get_country_from_ip(ip):
+    """Return the country for the given ip"""
+    try:
+        return reader.country(ip).country.iso_code
+    # if we have disabled geoip support, reader should be None, so the
+    # exception should be triggered
+    except (geoip2.errors.AddressNotFoundError,
+            geoip2.errors.GeoIP2Error, AttributeError):
+        return '--'
+
+
 class Client(db.Model):
     __tablename__ = 'clients'
     id = db.Column(db.Integer, primary_key=True)
@@ -164,13 +176,7 @@ def geolocate_client():
     # get the ip and aggregate to the /24
     ip = flask.request.remote_addr
     ip_aggr = ".".join(ip.split(".")[:3]) + ".0/24"
-    try:
-        country = reader.country(ip).country.iso_code
-    # if we have disabled geoip support, reader should be None, so the
-    # exception should be triggered
-    except (geoip2.errors.AddressNotFoundError,
-            geoip2.errors.GeoIP2Error, AttributeError):
-        country = '--'
+    country = get_country_from_ip(ip)
     return flask.jsonify({"ip": ip_aggr, "country": country})
 
 @auth.verify_password
