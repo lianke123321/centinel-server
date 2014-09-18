@@ -7,6 +7,7 @@ import os
 
 import config
 
+from datetime import datetime
 from werkzeug import secure_filename
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -37,11 +38,35 @@ def get_country_from_ip(ip):
         return '--'
 
 
+# This is a table to create a mapping between users and their roles
+# (permissions)
+roles_tab = db.Table('roles_tab',
+                 db.Column('user_id', db.Integer, db.ForeignKey('clients.id')),
+                 db.Column('role_id', db.Integer, db.ForeignKey('role.id'))
+)
+
+
 class Client(db.Model):
     __tablename__ = 'clients'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(36), index=True)  # uuid length=36
     password_hash = db.Column(db.String(64))
+    # there are at most 15 chars for ip plus 4 for netmask plus 1 for
+    # space, so 20 total chars
+    last_ip = db.Column(db.String(20))
+    last_seen = db.Column(db.DateTime)
+    registered_date = db.Column(db.DateTime)
+    has_given_consent = db.Column(db.Boolean)
+    date_given_consent = db.Column(db.DateTime)
+    is_vpn = db.Column(db.Boolean)
+    # we expect this to be a country code (2 chars)
+    country = db.Column(db.String(2))
+
+    # since a user can have multiple roles, we have a table to hold
+    # the mapping between users and their roles
+    roles = db.relationship('Role', secondary=roles_tab,
+                            backref=db.backref('users', lazy='dynamic'))
+
 
     def __init__(self, username, password):
         self.username = username
@@ -49,6 +74,14 @@ class Client(db.Model):
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
+
+
+class Role(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+
+    def __init__(self, name):
+        self.name = name
 
 
 @app.errorhandler(404)
