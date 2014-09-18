@@ -68,10 +68,42 @@ class Client(db.Model):
     roles = db.relationship('Role', secondary=roles_tab,
                             backref=db.backref('users', lazy='dynamic'))
 
+    def __init__(self, username, password, roles=['client'],
+                 kwargs={}):
+        """Create a client object.
 
-    def __init__(self, username, password):
+        Note: we set kwargs to an empty dict by default so that
+        everything below will always work (kwargs.get(key) returns
+        None if the key is not in the dict)
+
+        """
         self.username = username
         self.password_hash = pwd_context.encrypt(password)
+        roles_to_add = []
+        for role in roles:
+            role = Role.query.filter_by(name=role).first()
+            roles_to_add.append(role)
+        self.roles = roles_to_add
+
+        # process the json/keyword args to set the remaining
+        # variables.
+        # Note: we are not doing this programmatically to prevent
+        # security problems
+        if kwargs.get('ip') is not None:
+            ip = kwargs.get('ip')
+            self.last_ip = ".".join(ip.split(".")[:3]) + ".0/24"
+        if kwargs.get('vpn'):
+            self.is_vpn = kwargs.get('vpn')
+        if kwargs.get('consent'):
+            self.has_given_consent = kwargs.get('consent')
+            self.date_given_consent = datetime.now()
+        country = kwargs.get('country')
+        if country is not None and (len(country) == 2):
+            self.country = country
+        # we are not automatically doing this because we may want to
+        # create users without them ever connecting
+        if kwargs.get('last_seen'):
+            self.last_seen = kwargs.get('last_seen')
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
@@ -226,4 +258,9 @@ if __name__ == "__main__":
         if not os.path.exists(sql_dir):
             os.makedirs(sql_dir)
         db.create_all()
+        # create an admin and client role
+        db.session.add(Role('admin'))
+        db.session.add(Role('client'))
+        db.session.commit()
+
     app.run(debug=True)
