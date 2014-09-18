@@ -10,6 +10,7 @@ The Server used to control Centinel nodes in the wild.
 #### OSX
     $ pip install flask flask-httpauth flask-sqlalchemy passlib
     $ python server.py
+	$ pip install flask flask-httpauth flask-sqlalchemy passlib geoip2 IPy
 
 ### Supported platforms
     * Unix
