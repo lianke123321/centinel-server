@@ -158,5 +158,8 @@ def verify_password(username, password):
 if __name__ == "__main__":
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % (config.sqlite_db)
     if not os.path.exists(config.sqlite_db):
+        sql_dir = os.path.dirname(config.sqlite_db)
+        if not os.path.exists(sql_dir):
+            os.makedirs(sql_dir)
         db.create_all()
     app.run(debug=True)
