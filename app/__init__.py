@@ -9,4 +9,4 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % (config.sqlite_db)
 auth = HTTPBasicAuth()
 db = SQLAlchemy(app)
 
-from app import server, models
+from app import views, models
