@@ -1,9 +1,9 @@
-from app import db
-from app import app
-
 from datetime import datetime
 from passlib.apps import custom_app_context as pwd_context
 
+import centinel
+db = centinel.db
+app = centinel.app
 
 # constants
 # 15 chars for ip + 4 for netmask

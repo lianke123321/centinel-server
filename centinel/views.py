@@ -1,16 +1,19 @@
+from datetime import datetime
 import flask
 import geoip2.errors
 import geoip2.database
 import glob
 import json
 import os
+from werkzeug import secure_filename
 
-from app import app, db, auth
-from models import Client
+from centinel.models import Client
 import config
 
-from datetime import datetime
-from werkzeug import secure_filename
+import centinel
+app = centinel.app
+db = centinel.db
+auth = centinel.auth
 
 
 try:
