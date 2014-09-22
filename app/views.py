@@ -93,6 +93,7 @@ def get_results():
 
 @app.route("/experiments")
 @app.route("/experiments/<name>")
+@auth.login_required
 def get_experiments(name=None):
     experiments = {}
 
@@ -136,16 +137,17 @@ def register():
     ip = flask.request.remote_addr
 
     # parse the info we need out of the json
-    reg_kwargs = flask.request.get_json()
-    username = reg_kwargs.get('username')
-    password = reg_kwargs.get('password')
+    kwargs = flask.request.get_json()
+    username = kwargs.get('username')
+    password = kwargs.get('password')
     # if the user didn't specify which country they were coming from,
     # pull it from geolocation on their ip
-    country = reg_kwargs.get('country')
+    country = kwargs.get('country')
     if country is None or (len(country) != 2):
-        reg_kwargs['country'] = get_country_from_ip(ip)
-    reg_kwargs['ip'] = ip
-    reg_kwargs['last_seen'] = datetime.now()
+        kwargs['country'] = get_country_from_ip(ip)
+    kwargs['ip'] = ip
+    kwargs['last_seen'] = datetime.now()
+    kwargs['roles'] = ['client']
 
     if not username or not password:
         flask.abort(400)
@@ -154,12 +156,7 @@ def register():
     if client is not None:
         flask.abort(400)
 
-    # parse out the pieces from the client to add to the server
-
-    # Note: we don't let the user specify their roles. Role management
-    # has to be done on the backend itself
-    user = Client(username=username, password=password,
-                  roles=['client'], kwargs=reg_kwargs)
+    user = Client(**kwargs)
     db.session.add(user)
     db.session.commit()
 
