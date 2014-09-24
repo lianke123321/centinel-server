@@ -57,7 +57,8 @@ class Client(db.Model):
         if 'password' in kwargs:
             self.password_hash = pwd_context.encrypt(kwargs['password'])
         if 'roles' in kwargs:
-            self.roles = [Role.query.filter_by(name=role) for role in kwargs['roles']]
+            get_role = lambda role: Role.query.filter_by(name=role).first()
+            self.roles = [get_role(role) for role in kwargs['roles']]
         if 'ip' in kwargs:
             ip = kwargs['ip']
             # if there is a space between the ip and the netmask,
