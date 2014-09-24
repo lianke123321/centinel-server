@@ -140,17 +140,17 @@ def register():
     ip = flask.request.remote_addr
 
     # parse the info we need out of the json
-    kwargs = flask.request.get_json()
-    username = kwargs.get('username')
-    password = kwargs.get('password')
+    client_json = flask.request.get_json()
+    username = client_json.get('username')
+    password = client_json.get('password')
     # if the user didn't specify which country they were coming from,
     # pull it from geolocation on their ip
-    country = kwargs.get('country')
+    country = client_json.get('country')
     if country is None or (len(country) != 2):
-        kwargs['country'] = get_country_from_ip(ip)
-    kwargs['ip'] = ip
-    kwargs['last_seen'] = datetime.now()
-    kwargs['roles'] = ['client']
+        client_json['country'] = get_country_from_ip(ip)
+    client_json['ip'] = ip
+    client_json['last_seen'] = datetime.now()
+    client_json['roles'] = ['client']
 
     if not username or not password:
         flask.abort(400)
@@ -159,7 +159,7 @@ def register():
     if client is not None:
         flask.abort(400)
 
-    user = Client(**kwargs)
+    user = Client(**client_json)
     db.session.add(user)
     db.session.commit()
 
