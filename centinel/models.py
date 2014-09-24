@@ -43,13 +43,13 @@ class Client(db.Model):
         # custom functionality. Also do type checking on the variable
         # type
 
-        allowed_keys = {"username": None, "is_vpn": bool,
+        allowed_keys = {"username": "string", "is_vpn": bool,
                         "has_given_consent": bool,
                         "date_given_consent": datetime}
         for key in kwargs:
             if key not in allowed_keys:
                 continue
-            if ((allowed_keys[key] is not None) and
+            if ((allowed_keys[key] is not "string") and
                (isinstance(kwargs[key], allowed_keys[key]))):
                 continue
             setattr(self, key, kwargs[key])
@@ -57,8 +57,7 @@ class Client(db.Model):
         if 'password' in kwargs:
             self.password_hash = pwd_context.encrypt(kwargs['password'])
         if 'roles' in kwargs:
-            func = lambda role: Role.query.filter_by(name=role).first()
-            self.roles = map(func, kwargs['roles'])
+            self.roles = [Role.query.filter_by(name=role) for role in kwargs['roles']]
         if 'ip' in kwargs:
             ip = kwargs['ip']
             # if there is a space between the ip and the netmask,
