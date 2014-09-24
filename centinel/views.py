@@ -1,20 +1,20 @@
+from datetime import datetime
 import flask
 import geoip2.errors
 import geoip2.database
 import glob
 import json
 import os
+from werkzeug import secure_filename
 
+from centinel.models import Client
 import config
 
-from werkzeug import secure_filename
-from flask.ext.httpauth import HTTPBasicAuth
-from flask.ext.sqlalchemy import SQLAlchemy
-from passlib.apps import custom_app_context as pwd_context
+import centinel
+app = centinel.app
+db = centinel.db
+auth = centinel.auth
 
-app = flask.Flask("Centinel")
-auth = HTTPBasicAuth()
-db = SQLAlchemy(app)
 
 try:
     reader = geoip2.database.Reader(config.maxmind_db)
@@ -25,19 +25,16 @@ except (geoip2.database.maxminddb.InvalidDatabaseError, IOError):
            "will be disabled")
     reader = None
 
-class Client(db.Model):
-    __tablename__ = 'clients'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(36), index=True)  # uuid length=36
-    password_hash = db.Column(db.String(64))
 
-    def __init__(self, username, password):
-        self.username = username
-        self.password_hash = pwd_context.encrypt(password)
-
-    def verify_password(self, password):
-        return pwd_context.verify(password, self.password_hash)
-
+def get_country_from_ip(ip):
+    """Return the country for the given ip"""
+    try:
+        return reader.country(ip).country.iso_code
+    # if we have disabled geoip support, reader should be None, so the
+    # exception should be triggered
+    except (geoip2.errors.AddressNotFoundError,
+            geoip2.errors.GeoIP2Error, AttributeError):
+        return '--'
 
 @app.errorhandler(404)
 def not_found(error):
@@ -99,6 +96,7 @@ def get_results():
 
 @app.route("/experiments")
 @app.route("/experiments/<name>")
+@auth.login_required
 def get_experiments(name=None):
     experiments = {}
 
@@ -139,18 +137,29 @@ def register():
     if not flask.request.json:
         flask.abort(404)
 
-    username = flask.request.json.get('username')
-    password = flask.request.json.get('password')
+    ip = flask.request.remote_addr
+
+    # parse the info we need out of the json
+    client_json = flask.request.get_json()
+    username = client_json.get('username')
+    password = client_json.get('password')
+    # if the user didn't specify which country they were coming from,
+    # pull it from geolocation on their ip
+    country = client_json.get('country')
+    if country is None or (len(country) != 2):
+        client_json['country'] = get_country_from_ip(ip)
+    client_json['ip'] = ip
+    client_json['last_seen'] = datetime.now()
+    client_json['roles'] = ['client']
 
     if not username or not password:
         flask.abort(400)
 
     client = Client.query.filter_by(username=username).first()
-
     if client is not None:
         flask.abort(400)
 
-    user = Client(username=username, password=password)
+    user = Client(**client_json)
     db.session.add(user)
     db.session.commit()
 
@@ -164,26 +173,10 @@ def geolocate_client():
     # get the ip and aggregate to the /24
     ip = flask.request.remote_addr
     ip_aggr = ".".join(ip.split(".")[:3]) + ".0/24"
-    try:
-        country = reader.country(ip).country.iso_code
-    # if we have disabled geoip support, reader should be None, so the
-    # exception should be triggered
-    except (geoip2.errors.AddressNotFoundError,
-            geoip2.errors.GeoIP2Error, AttributeError):
-        country = '--'
+    country = get_country_from_ip(ip)
     return flask.jsonify({"ip": ip_aggr, "country": country})
 
 @auth.verify_password
 def verify_password(username, password):
     user = Client.query.filter_by(username=username).first()
     return user and user.verify_password(password)
-
-
-if __name__ == "__main__":
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % (config.sqlite_db)
-    if not os.path.exists(config.sqlite_db):
-        sql_dir = os.path.dirname(config.sqlite_db)
-        if not os.path.exists(sql_dir):
-            os.makedirs(sql_dir)
-        db.create_all()
-    app.run(debug=True)
