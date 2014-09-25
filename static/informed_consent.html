@@ -184,7 +184,10 @@
 
 	<div id="freedom-house">
 	  <h3> Freedom House: - Freedom of the Net 2012 </h3>
-	  <replace-this-with-freedom-house>
+	  <iframe src="replace-this-with-freedom-house">
+	    This should be an iframe with Freedom House's Freedom of
+	    the Net 2012 report specific to your selected country
+	  </iframe>
 	</div>
 	<div id="economist">
 	  <h3> Economist- Democracy Index </h3>
@@ -192,7 +195,11 @@
 	</div>
 	<div id="canada-travel">
 	  <h3> Government of Canada Travel Advisory</h3>
-	  <replace-this-with-canada>
+	  <iframe src="replace-this-with-canada">
+	    This should be an iframe with travel advisory information
+	    from the Canadian government specific to your selected
+	    country.
+	  </iframe>
 	</div>
       </div>
     </div>
@@ -382,9 +389,9 @@
     </div>
 
     <div id="submit-consent">
-      <form id="consent_form" name="submit-consent" action="submit_consent" method="post">
+      <form id="consent_form" name="submit_consent" action="submit_consent" method="post">
 
-	<b>Device tag</b>: <!-- insert device tag here --><br><br>
+	<b>Device tag</b>: replace-with-username-value<br><br>
 
 	<input type="checkbox" name="given_consent" value="True" id="consent_checkbox">
 	I have reviewed the informed consent form and agree to
@@ -392,7 +399,7 @@
 	deployments of Internet censorship technology<br><br>
 
 	<input type="submit" value="Submit informed consent (must select box above)"><br>
-	<replace-with-hidden-username>
+	<input type="hidden" name="username" value="replace-with-username-value">
       </form>
 
     </div>
