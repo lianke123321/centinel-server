@@ -236,7 +236,7 @@ def get_country_specific_consent():
 
     return page_content
 
-@app.route("submit_consent")
+@app.route("/submit_consent")
 def update_informed_consent():
     username = flask.request.args.get('username')
     if username is None:
@@ -245,7 +245,7 @@ def update_informed_consent():
     client = Client.query.filter_by(username=username).first()
     client.has_given_consent = True
     client.data_given_consent = datetime.now()
-    session.commit()
+    db.session.commit()
 
 @auth.verify_password
 def verify_password(username, password):
