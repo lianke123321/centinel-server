@@ -5,6 +5,7 @@ import geoip2.database
 import glob
 import json
 import os
+import re
 import requests
 from werkzeug import secure_filename
 
@@ -218,25 +219,21 @@ def get_country_specific_consent():
 
     # if we don't already have the content from freedom house, fetch
     # it, then host it locally and insert it into the report
-    freedom_url = "freedom_house_" + country
+    freedom_url = "".join(["freedom_house_", country, ".html"])
     filename = os.path.join("static", freedom_url)
-    # get the content from freedom housr if we don't already have it
-    if not os.path.exists(filename):
-        req = requests.get(constants.freedom_house_url(country))
-        with open(filename, 'w') as fileP:
-            fileP.write(req.content)
+    # get the content from freedom house if we don't already have it
+    get_page_and_strip_bad_content(constants.freedom_house_url(country),
+                                   filename)
     freedom_replacement = "replace-this-with-freedom-house"
     page_content = page_content.replace(freedom_replacement,
                                         "static/" + freedom_url)
 
     # if we don't already have the content from canada travel, fetch
     # it, then host it locally and insert it into the report
-    canada_url = "canada_" + country
+
+    canada_url = "".join(["canada_", country, ".html"])
     filename = os.path.join("static", canada_url)
-    if not os.path.exists(filename):
-        req = requests.get(constants.canada_url(country))
-        with open(filename, 'w') as fileP:
-            fileP.write(req.content)
+    get_page_and_strip_bad_content(constants.canada_url(country), filename)
     canada_replacement = "replace-this-with-canada"
     page_content = page_content.replace(canada_replacement,
                                         "static/" + canada_url)
@@ -247,6 +244,30 @@ def get_country_specific_consent():
     flask.url_for('static', filename='consent.js')
 
     return page_content
+
+def get_page_and_strip_bad_content(url, filename):
+    """Get the given page, strip out all requests back to the original
+    domain (identified via src tags), and write out the page
+
+    Note: this will break stuff, but that is better than letting the
+    domain know where and who our clients are
+
+    Note: we expect the content to be fairly static, so we don't
+    refetch it if we already have it
+
+    """
+    # if os.path.exists(filename):
+    #     return
+    req = requests.get(url)
+    # replace every src with a blank reference (sucks for the
+    # rendering engine to figure out, but hey, they get paid to work
+    # that out)
+    replace_src = 'src\s*=\s*"\s*\S+\s*"'
+    page = re.sub(replace_src, "", req.content)
+    replace_href = 'href\s*=\s*"\s*\S+\s*"'
+    page = re.sub(replace_href, "", page)
+    with open(filename, 'w') as fileP:
+        fileP.write(page)
 
 @app.route("/submit_consent")
 def update_informed_consent():
