@@ -180,32 +180,34 @@ def geolocate_client():
 
 @app.route("/get_initial_consent")
 def get_initial_informed_consent():
-    # insert a hidden field into the form with the user's username
-    # (this let's us keep state for the next time the client talks to
-    # us)
     username = flask.request.args.get('username')
-    if username is None:
+    password = flask.request.args.get('password')
+    if username is None or password is None:
         flask.abort(404)
-    username = str(username)
-    username_field = '<input type="hidden" name="username" value="replace-value">'
-    # add the username to the username replacement string
-    username_field = username_field.replace("replace-value", username)
+    username, password = str(username), str(password)
+    if not verify_password(username, password):
+        flask.abort(404)
 
-    # replace the appropriate section of the page with the username
-    # field
+    # insert a hidden field into the form with the user's username and
+    # password
     with open('static/initial_informed_consent.html', 'r') as fileP:
         initial_page = fileP.read()
-    replace_field = "<replace-with-hidden-username>"
-    initial_page = initial_page.replace(replace_field, username_field)
+    initial_page = initial_page.replace("replace-with-username-value",
+                                        username)
+    initial_page = initial_page.replace("replace-with-password-value",
+                                        password)
     return initial_page
 
 @app.route("/get_informed_consent_for_country")
 def get_country_specific_consent():
     username = flask.request.args.get('username')
+    password = flask.request.args.get('password')
     country = flask.request.args.get('country')
-    if username is None or country is None:
+    if username is None or country is None or password is None:
         flask.abort(404)
-    username = str(username)
+    username, password = str(username), str(password)
+    if not verify_password(username, password):
+        flask.abort(404)
     country = str(country).upper()
     if country not in constants.freedom_house_lookup:
         flask.abort(404)
@@ -213,9 +215,11 @@ def get_country_specific_consent():
     with open('static/informed_consent.html', 'r') as fileP:
         page_content = fileP.read()
 
-    # insert the username into the page
+    # insert the username and password into hidden fields
     replace_field = "replace-with-username-value"
     page_content = page_content.replace(replace_field, username)
+    replace_field = "replace-with-password-value"
+    page_content = page_content.replace(replace_field, password)
 
     # if we don't already have the content from freedom house, fetch
     # it, then host it locally and insert it into the report
@@ -272,13 +276,19 @@ def get_page_and_strip_bad_content(url, filename):
 @app.route("/submit_consent")
 def update_informed_consent():
     username = flask.request.args.get('username')
-    if username is None:
+    password = flask.request.args.get('password')
+    if username is None or password is None:
         flask.abort(404)
-    username = str(username)
+    username, password = str(username), str(password)
+    if not verify_password(username, password):
+        flask.abort(404)
     client = Client.query.filter_by(username=username).first()
     client.has_given_consent = True
-    client.data_given_consent = datetime.now()
+    client.date_given_consent = datetime.now()
     db.session.commit()
+    response = ("Success! Thanks for registering; you are ready to start "
+                "sending us censorship measurement results.")
+    return response
 
 @auth.verify_password
 def verify_password(username, password):
