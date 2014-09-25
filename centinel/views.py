@@ -176,6 +176,27 @@ def geolocate_client():
     country = get_country_from_ip(ip)
     return flask.jsonify({"ip": ip_aggr, "country": country})
 
+@app.route("/get_initial_consent")
+def get_initial_informed_consent():
+    # insert a hidden field into the form with the user's username
+    # (this let's us keep state for the next time the client talks to
+    # us)
+    username = flask.request.args.get('username')
+    if username is None:
+        flask.abort(404)
+    username = str(username)
+    username_field = '<input type="hidden" name="username" value="replace-value">'
+    # add the username to the username replacement string
+    username_field = username_field.replace("replace-value", username)
+
+    # replace the appropriate section of the page with the username
+    # field
+    with open('content/initial_informed_consent.html', 'r') as fileP:
+        initial_page = fileP.read()
+    replace_field = "<replace-with-hidden-username>"
+    initial_page = initial_page.replace(replace_field, username_field)
+    return initial_page
+
 @auth.verify_password
 def verify_password(username, password):
     user = Client.query.filter_by(username=username).first()
