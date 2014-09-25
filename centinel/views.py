@@ -5,16 +5,17 @@ import geoip2.database
 import glob
 import json
 import os
+import requests
 from werkzeug import secure_filename
 
 from centinel.models import Client
 import config
+from centinel import constants
 
 import centinel
 app = centinel.app
 db = centinel.db
 auth = centinel.auth
-
 
 try:
     reader = geoip2.database.Reader(config.maxmind_db)
@@ -191,11 +192,39 @@ def get_initial_informed_consent():
 
     # replace the appropriate section of the page with the username
     # field
-    with open('content/initial_informed_consent.html', 'r') as fileP:
+    with open('static/initial_informed_consent.html', 'r') as fileP:
         initial_page = fileP.read()
     replace_field = "<replace-with-hidden-username>"
     initial_page = initial_page.replace(replace_field, username_field)
     return initial_page
+
+@app.route("/get_informed_consent_for_country")
+def get_country_specific_consent():
+    username = flask.request.args.get('username')
+    country = flask.request.args.get('country')
+    if username is None or country is None:
+        flask.abort(404)
+    username = str(username)
+    country = str(country).upper()
+    if country not in constants.freedom_house_lookup:
+        flask.abort(404)
+
+    with open('static/informed_consent.html', 'r') as fileP:
+        page_content = fileP.read()
+
+    # get the content from freedom house and insert it into the report
+    req = requests.get(constants.freedom_house_url(country))
+    freedom_replacement = "<replace-this-with-freedom-house>"
+    page_content = page_content.replace(freedom_replacement, req.content)
+
+    flask.url_for('static', filename='economistDemocracyIndex.pdf')
+
+    # get the content from canada travel advisory and insert it into the report
+    req = requests.get(constants.canada_url(country))
+    canada_replacement = "<replace-this-with-canada>"
+    page_content = page_content.replace(canada_replacement, req.content)
+
+    return page_content
 
 @auth.verify_password
 def verify_password(username, password):
