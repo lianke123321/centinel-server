@@ -205,6 +205,11 @@ def get_country_specific_consent():
     if username is None or country is None:
         flask.abort(404)
     username = str(username)
+
+    username_field = '<input type="hidden" name="username" value="replace-value">'
+    # add the username to the username replacement string
+    username_field = username_field.replace("replace-value", username)
+
     country = str(country).upper()
     if country not in constants.freedom_house_lookup:
         flask.abort(404)
@@ -212,12 +217,17 @@ def get_country_specific_consent():
     with open('static/informed_consent.html', 'r') as fileP:
         page_content = fileP.read()
 
+    # insert a hidden field to submit the userid for us
+    replace_field = "<replace-with-hidden-username>"
+    page_content = page_content.replace(replace_field, username_field)
+
     # get the content from freedom house and insert it into the report
     req = requests.get(constants.freedom_house_url(country))
     freedom_replacement = "<replace-this-with-freedom-house>"
     page_content = page_content.replace(freedom_replacement, req.content)
 
     flask.url_for('static', filename='economistDemocracyIndex.pdf')
+    flask.url_for('static', filename='consent.js')
 
     # get the content from canada travel advisory and insert it into the report
     req = requests.get(constants.canada_url(country))

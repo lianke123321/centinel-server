@@ -382,18 +382,24 @@
     </div>
 
     <div id="submit-consent">
-      <form name="submit-consent" action="submit_consent" method="post">
+      <form id="consent_form" name="submit-consent" action="submit_consent" method="post">
 
 	<b>Device tag</b>: <!-- insert device tag here --><br><br>
 
-	<input type="checkbox" name="given_consent" value="True">I
-	have reviewed the informed consent form and agree to
+	<input type="checkbox" name="given_consent" value="True" id="consent_checkbox">
+	I have reviewed the informed consent form and agree to
 	participate in the study titled: Characterizing worldwide
 	deployments of Internet censorship technology<br><br>
 
 	<input type="submit" value="Submit informed consent (must select box above)"><br>
+	<replace-with-hidden-username>
       </form>
+
     </div>
 
   </body>
+  <script src="static/consent.js"></script>
+  <script>
+    this.Consent()
+  </script>
 </html>
