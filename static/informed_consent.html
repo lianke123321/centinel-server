@@ -2,9 +2,6 @@
 <html>
   <head>
     <title>Centinel Informed Consent Form</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
   </head>
 
 
@@ -182,9 +179,28 @@
 	  situation in your country.
 	</p>
 
+	<p>
+	  Please excuse the fact that the iframes below are broken. To
+	  ensure that other sites can't identify your information, we
+	  host the following resources locally and stripped out all
+	  requests to ensure that the sites would only see our web
+	  server's IP, not your local IP. Unfortunately, this is not
+	  how HTTP is designed to work, so much of the functionality
+	  of these pages is broken. 
+	</p>
+	<p>
+	  If you would like to see all of the content, then a Google
+	  search for these domains should get you to the
+	  resources. Again, we apologize for not directly providing
+	  links, but browser prefetching (preemptively doing DNS
+	  lookups for resources on a page) could potentially let these
+	  sites identify that you visited, so we stripped out all
+	  links.
+	</p>
+
 	<div id="freedom-house">
 	  <h3> Freedom House: - Freedom of the Net 2012 </h3>
-	  <iframe src="replace-this-with-freedom-house">
+	  <iframe src="replace-this-with-freedom-house" style="width: 95%; height: 800px">
 	    This should be an iframe with Freedom House's Freedom of
 	    the Net 2012 report specific to your selected country
 	  </iframe>
@@ -195,7 +211,7 @@
 	</div>
 	<div id="canada-travel">
 	  <h3> Government of Canada Travel Advisory</h3>
-	  <iframe src="replace-this-with-canada">
+	  <iframe src="replace-this-with-canada" style="width: 95%; height: 800px">
 	    This should be an iframe with travel advisory information
 	    from the Canadian government specific to your selected
 	    country.
