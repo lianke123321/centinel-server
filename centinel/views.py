@@ -256,10 +256,10 @@ def get_page_and_strip_bad_content(url, filename):
     refetch it if we already have it
 
     """
-    # if os.path.exists(filename):
-    #     return
+    if os.path.exists(filename):
+        return
     req = requests.get(url)
-    # replace every src with a blank reference (sucks for the
+    # replace external links with a blank reference (sucks for the
     # rendering engine to figure out, but hey, they get paid to work
     # that out)
     replace_src = 'src\s*=\s*"\s*\S+\s*"'
