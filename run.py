@@ -18,4 +18,8 @@ if __name__ == "__main__":
         db.session.add(centinel.models.Role('admin'))
         db.session.add(centinel.models.Role('client'))
         db.session.commit()
-    app.run(debug=True)
+
+    # Also, I shouldn't have to say this, but *DO NOT COMMIT THE
+    # KEY*. Under no circumstances should the key be committed
+    app.run(host="0.0.0.0", port=8082, debug=True,
+            ssl_context=(config.ssl_cert, config.ssl_key))

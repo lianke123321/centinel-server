@@ -16,3 +16,7 @@ experiments_dir = os.path.join(centinel_home, 'experiments')
 # sqlite
 sqlite_db       = os.path.join(centinel_home, 'db.sqlite')
 maxmind_db      = os.path.join(centinel_home, 'maxmind.mmdb')
+
+# web server
+ssl_cert = "server.iclab.org.crt"
+ssl_key  = "server.iclab.org.key"
