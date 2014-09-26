@@ -18,5 +18,5 @@ sqlite_db       = os.path.join(centinel_home, 'db.sqlite')
 maxmind_db      = os.path.join(centinel_home, 'maxmind.mmdb')
 
 # web server
-ssl_cert = "pizzalicio.us.crt"
-ssl_key  = "pizzalicio.us.key"
+ssl_cert = "server.iclab.org.crt"
+ssl_key  = "server.iclab.org.key"
