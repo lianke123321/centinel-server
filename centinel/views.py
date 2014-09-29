@@ -235,19 +235,8 @@ def get_country_specific_consent():
     page_content = page_content.replace(freedom_replacement,
                                         "static/" + freedom_url)
 
-    # if we don't already have the content from canada travel, fetch
-    # it, then host it locally and insert it into the report
-
-    canada_url = "".join(["canada_", country, ".html"])
-    filename = os.path.join("static", canada_url)
-    get_page_and_strip_bad_content(constants.canada_url(country), filename)
-    canada_replacement = "replace-this-with-canada"
-    page_content = page_content.replace(canada_replacement,
-                                        "static/" + canada_url)
-
     flask.url_for('static', filename=freedom_url)
     flask.url_for('static', filename='economistDemocracyIndex.pdf')
-    flask.url_for('static', filename=canada_url)
     flask.url_for('static', filename='consent.js')
 
     return page_content
@@ -263,8 +252,8 @@ def get_page_and_strip_bad_content(url, filename):
     refetch it if we already have it
 
     """
-    if os.path.exists(filename):
-        return
+    # if os.path.exists(filename):
+    #     return
     req = requests.get(url)
     # replace external links with a blank reference (sucks for the
     # rendering engine to figure out, but hey, they get paid to work
@@ -273,6 +262,8 @@ def get_page_and_strip_bad_content(url, filename):
     page = re.sub(replace_src, "", req.content)
     replace_href = 'href\s*=\s*"\s*\S+\s*"'
     page = re.sub(replace_href, "", page)
+    replace_script = '<\s*script\s*>[\s\S]*</\s*script\s*>'
+    page = re.sub(replace_script, "", page)
     with open(filename, 'w') as fileP:
         fileP.write(page)
 
