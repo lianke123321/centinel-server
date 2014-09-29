@@ -181,11 +181,12 @@ def geolocate_client():
 
 @app.route("/get_initial_consent")
 def get_initial_informed_consent():
-    username = urlsafe_b64decode(flask.request.args.get('username'))
-    password = urlsafe_b64decode(flask.request.args.get('password'))
+    username = flask.request.args.get('username')
+    password = flask.request.args.get('password')
     if username is None or password is None:
         flask.abort(404)
-    username, password = str(username), str(password)
+    username = urlsafe_b64decode(str(username))
+    password = urlsafe_b64decode(str(password))
     if not verify_password(username, password):
         flask.abort(404)
 
@@ -201,12 +202,13 @@ def get_initial_informed_consent():
 
 @app.route("/get_informed_consent_for_country")
 def get_country_specific_consent():
-    username = urlsafe_b64decode(flask.request.args.get('username'))
-    password = urlsafe_b64decode(flask.request.args.get('password'))
+    username = flask.request.args.get('username')
+    password = flask.request.args.get('password')
     country = flask.request.args.get('country')
-    if username is None or country is None or password is None:
+    if username is None or password is None or country is None:
         flask.abort(404)
-    username, password = str(username), str(password)
+    username = urlsafe_b64decode(str(username))
+    password = urlsafe_b64decode(str(password))
     if not verify_password(username, password):
         flask.abort(404)
     country = str(country).upper()
@@ -269,11 +271,12 @@ def get_page_and_strip_bad_content(url, filename):
 
 @app.route("/submit_consent")
 def update_informed_consent():
-    username = urlsafe_b64decode(flask.request.args.get('username'))
-    password = urlsafe_b64decode(flask.request.args.get('password'))
+    username = flask.request.args.get('username')
+    password = flask.request.args.get('password')
     if username is None or password is None:
         flask.abort(404)
-    username, password = str(username), str(password)
+    username = urlsafe_b64decode(str(username))
+    password = urlsafe_b64decode(str(password))
     if not verify_password(username, password):
         flask.abort(404)
     client = Client.query.filter_by(username=username).first()
