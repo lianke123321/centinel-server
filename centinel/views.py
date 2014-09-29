@@ -1,4 +1,4 @@
-from base64 import b64decode, b64encode
+from base64 import urlsafe_b64decode, urlsafe_b64encode
 from datetime import datetime
 import flask
 import geoip2.errors
@@ -181,8 +181,8 @@ def geolocate_client():
 
 @app.route("/get_initial_consent")
 def get_initial_informed_consent():
-    username = b64decode(flask.request.args.get('username'))
-    password = b64decode(flask.request.args.get('password'))
+    username = urlsafe_b64decode(flask.request.args.get('username'))
+    password = urlsafe_b64decode(flask.request.args.get('password'))
     if username is None or password is None:
         flask.abort(404)
     username, password = str(username), str(password)
@@ -194,15 +194,15 @@ def get_initial_informed_consent():
     with open('static/initial_informed_consent.html', 'r') as fileP:
         initial_page = fileP.read()
     initial_page = initial_page.replace("replace-with-username-value",
-                                        b64encode(username))
+                                        urlsafe_b64encode(username))
     initial_page = initial_page.replace("replace-with-password-value",
-                                        b64encode(password))
+                                        urlsafe_b64encode(password))
     return initial_page
 
 @app.route("/get_informed_consent_for_country")
 def get_country_specific_consent():
-    username = b64decode(flask.request.args.get('username'))
-    password = b64decode(flask.request.args.get('password'))
+    username = urlsafe_b64decode(flask.request.args.get('username'))
+    password = urlsafe_b64decode(flask.request.args.get('password'))
     country = flask.request.args.get('country')
     if username is None or country is None or password is None:
         flask.abort(404)
@@ -218,9 +218,9 @@ def get_country_specific_consent():
 
     # insert the username and password into hidden fields
     replace_field = "replace-with-username-value"
-    page_content = page_content.replace(replace_field, (b64encode(username)))
+    page_content = page_content.replace(replace_field, (urlsafe_b64encode(username)))
     replace_field = "replace-with-password-value"
-    page_content = page_content.replace(replace_field, (b64encode(password)))
+    page_content = page_content.replace(replace_field, (urlsafe_b64encode(password)))
     replace_field = "replace-with-human-readable-username-value"
     page_content = page_content.replace(replace_field, (username))
 
@@ -269,8 +269,8 @@ def get_page_and_strip_bad_content(url, filename):
 
 @app.route("/submit_consent")
 def update_informed_consent():
-    username = b64decode(flask.request.args.get('username'))
-    password = b64decode(flask.request.args.get('password'))
+    username = urlsafe_b64decode(flask.request.args.get('username'))
+    password = urlsafe_b64decode(flask.request.args.get('password'))
     if username is None or password is None:
         flask.abort(404)
     username, password = str(username), str(password)
