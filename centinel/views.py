@@ -7,7 +7,7 @@ import json
 import os
 from werkzeug import secure_filename
 
-from centinel.models import Client
+from centinel.models import Client, Role
 import config
 
 import centinel
@@ -126,7 +126,14 @@ def get_experiments(name=None):
 @app.route("/clients")
 @auth.login_required
 def get_clients():
-    # TODO: ensure that only the admin can make this call
+
+    # ensure that the client has the admin role
+    username = flask.request.authorization.username
+    user = Client.query.filter_by(username=username).first()
+    admin = Role.query.filter_by(name='admin').first()
+    if user not in admin.users:
+        return unauthorized()
+
     clients = Client.query.all()
     return flask.jsonify(clients=[client.username for client in clients])
 
