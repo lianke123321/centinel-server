@@ -48,6 +48,10 @@ def not_found(error):
 def bad_request(error):
     return flask.make_response(flask.jsonify({'error': 'Bad request'}), 400)
 
+@app.errorhandler(418)
+def no_consent(error):
+    return flask.make_response(flask.jsonify({'error': 'Consent not given'}), 418)
+
 @auth.error_handler
 def unauthorized():
     json_resp = flask.jsonify({'error': 'Unauthorized access'})
@@ -64,9 +68,15 @@ def submit_result():
     if not flask.request.files:
         flask.abort(400)
 
+    # make sure the informed consent has been given before we proceed
+    username = flask.request.authorization.username
+    client = Client.query.filter_by(username=username).first()
+    if not client.has_given_consent:
+        flask.abort(418)
+
     # TODO: overwrite file if exists?
     result_file = flask.request.files['result']
-    client_dir = flask.request.authorization.username
+    client_dir = username
 
     # we assume that the directory was created when the user
     # registered
@@ -115,6 +125,12 @@ def get_experiments(name=None):
     # TODO: create an option to pull down all?
     # look in experiments directory for each user
     username = flask.request.authorization.username
+
+    # make sure the informed consent has been given before we proceed
+    client = Client.query.filter_by(username=username).first()
+    if not client.has_given_consent:
+        flask.abort(418)
+
     user_dir = os.path.join(config.experiments_dir, username, '[!_]*.py')
     for path in glob.glob(user_dir):
         file_name, _ = os.path.splitext(os.path.basename(path))
