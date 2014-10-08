@@ -9,8 +9,9 @@ import os
 import re
 import requests
 from werkzeug import secure_filename
+import tarfile
 
-from centinel.models import Client
+from centinel.models import Client, Role
 import config
 from centinel import constants
 
@@ -74,6 +75,14 @@ def submit_result():
 
     result_file.save(file_path)
 
+    if tarfile.is_tarfile(file_path):
+        with tarfile.open(file_path, "r:bz2") as tar:
+            members = [tarinfo for tarinfo in tar
+                       if os.path.splitext(tarinfo.name)[1] == ".json"]
+            tar.extractall(os.path.join(config.results_dir, client_dir),
+                           members=members)
+        os.remove(file_path)
+
     return flask.jsonify({"status": "success"}), 201
 
 @app.route("/results")
@@ -129,7 +138,14 @@ def get_experiments(name=None):
 @app.route("/clients")
 @auth.login_required
 def get_clients():
-    # TODO: ensure that only the admin can make this call
+
+    # ensure that the client has the admin role
+    username = flask.request.authorization.username
+    user = Client.query.filter_by(username=username).first()
+    admin = Role.query.filter_by(name='admin').first()
+    if user not in admin.users:
+        return unauthorized()
+
     clients = Client.query.all()
     return flask.jsonify(clients=[client.username for client in clients])
 
