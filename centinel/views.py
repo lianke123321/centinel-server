@@ -1,3 +1,4 @@
+from base64 import urlsafe_b64decode, urlsafe_b64encode
 from datetime import datetime
 import flask
 import geoip2.errors
@@ -5,17 +6,19 @@ import geoip2.database
 import glob
 import json
 import os
+import re
+import requests
 from werkzeug import secure_filename
 import tarfile
 
 from centinel.models import Client, Role
 import config
+from centinel import constants
 
 import centinel
 app = centinel.app
 db = centinel.db
 auth = centinel.auth
-
 
 try:
     reader = geoip2.database.Reader(config.maxmind_db)
@@ -191,6 +194,114 @@ def geolocate_client():
     ip_aggr = ".".join(ip.split(".")[:3]) + ".0/24"
     country = get_country_from_ip(ip)
     return flask.jsonify({"ip": ip_aggr, "country": country})
+
+@app.route("/get_initial_consent")
+def get_initial_informed_consent():
+    username = flask.request.args.get('username')
+    password = flask.request.args.get('password')
+    if username is None or password is None:
+        flask.abort(404)
+    username = urlsafe_b64decode(str(username))
+    password = urlsafe_b64decode(str(password))
+    if not verify_password(username, password):
+        flask.abort(404)
+
+    # insert a hidden field into the form with the user's username and
+    # password
+    with open('static/initial_informed_consent.html', 'r') as fileP:
+        initial_page = fileP.read()
+    initial_page = initial_page.replace("replace-with-username-value",
+                                        urlsafe_b64encode(username))
+    initial_page = initial_page.replace("replace-with-password-value",
+                                        urlsafe_b64encode(password))
+    return initial_page
+
+@app.route("/get_informed_consent_for_country")
+def get_country_specific_consent():
+    username = flask.request.args.get('username')
+    password = flask.request.args.get('password')
+    country = flask.request.args.get('country')
+    if username is None or password is None or country is None:
+        flask.abort(404)
+    username = urlsafe_b64decode(str(username))
+    password = urlsafe_b64decode(str(password))
+    if not verify_password(username, password):
+        flask.abort(404)
+    country = str(country).upper()
+    if country not in constants.freedom_house_lookup:
+        flask.abort(404)
+
+    with open('static/informed_consent.html', 'r') as fileP:
+        page_content = fileP.read()
+
+    # insert the username and password into hidden fields
+    replace_field = "replace-with-username-value"
+    page_content = page_content.replace(replace_field, (urlsafe_b64encode(username)))
+    replace_field = "replace-with-password-value"
+    page_content = page_content.replace(replace_field, (urlsafe_b64encode(password)))
+    replace_field = "replace-with-human-readable-username-value"
+    page_content = page_content.replace(replace_field, (username))
+
+    # if we don't already have the content from freedom house, fetch
+    # it, then host it locally and insert it into the report
+    freedom_url = "".join(["freedom_house_", country, ".html"])
+    filename = os.path.join("static", freedom_url)
+    # get the content from freedom house if we don't already have it
+    get_page_and_strip_bad_content(constants.freedom_house_url(country),
+                                   filename)
+    freedom_replacement = "replace-this-with-freedom-house"
+    page_content = page_content.replace(freedom_replacement,
+                                        "static/" + freedom_url)
+
+    flask.url_for('static', filename=freedom_url)
+    flask.url_for('static', filename='economistDemocracyIndex.pdf')
+    flask.url_for('static', filename='consent.js')
+
+    return page_content
+
+def get_page_and_strip_bad_content(url, filename):
+    """Get the given page, strip out all requests back to the original
+    domain (identified via src tags), and write out the page
+
+    Note: this will break stuff, but that is better than letting the
+    domain know where and who our clients are
+
+    Note: we expect the content to be fairly static, so we don't
+    refetch it if we already have it
+
+    """
+    # if os.path.exists(filename):
+    #     return
+    req = requests.get(url)
+    # replace external links with a blank reference (sucks for the
+    # rendering engine to figure out, but hey, they get paid to work
+    # that out)
+    replace_src = 'src\s*=\s*"\s*\S+\s*"'
+    page = re.sub(replace_src, "", req.content)
+    replace_href = 'href\s*=\s*"\s*\S+\s*"'
+    page = re.sub(replace_href, "", page)
+    replace_script = '<\s*script\s*>[\s\S]*</\s*script\s*>'
+    page = re.sub(replace_script, "", page)
+    with open(filename, 'w') as fileP:
+        fileP.write(page)
+
+@app.route("/submit_consent")
+def update_informed_consent():
+    username = flask.request.args.get('username')
+    password = flask.request.args.get('password')
+    if username is None or password is None:
+        flask.abort(404)
+    username = urlsafe_b64decode(str(username))
+    password = urlsafe_b64decode(str(password))
+    if not verify_password(username, password):
+        flask.abort(404)
+    client = Client.query.filter_by(username=username).first()
+    client.has_given_consent = True
+    client.date_given_consent = datetime.now()
+    db.session.commit()
+    response = ("Success! Thanks for registering; you are ready to start "
+                "sending us censorship measurement results.")
+    return response
 
 @auth.verify_password
 def verify_password(username, password):
