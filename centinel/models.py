@@ -49,10 +49,10 @@ class Client(db.Model):
         for key in kwargs:
             if key not in allowed_keys:
                 continue
-            if ((allowed_keys[key] is not "string") and
-               (isinstance(kwargs[key], allowed_keys[key]))):
-                continue
-            setattr(self, key, kwargs[key])
+
+            if (allowed_keys[key] is "string" or
+                (isinstance(kwargs[key], allowed_keys[key]))):
+                setattr(self, key, kwargs[key])
 
         if 'password' in kwargs:
             self.password_hash = pwd_context.encrypt(kwargs['password'])
