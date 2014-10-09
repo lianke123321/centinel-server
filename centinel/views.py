@@ -4,6 +4,7 @@ import flask
 import geoip2.errors
 import geoip2.database
 import glob
+import hashlib
 import json
 import os
 import re
@@ -137,8 +138,13 @@ def get_experiments(name=None):
         experiments[file_name] = path
 
     # send all the experiment file names
+    # send all the experiment file names
     if name is None:
-        return flask.jsonify({"experiments": experiments.keys()})
+        for filename in experiments:
+            with open(experiments[filename], 'r') as fileP:
+                hash_val = hashlib.md5(fileP.read()).digest()
+                experiments[filename] = urlsafe_b64encode(hash_val)
+        return flask.jsonify({"experiments": experiments})
 
     # this should never happen, but better be safe
     if '..' in name or name.startswith('/'):
@@ -147,6 +153,38 @@ def get_experiments(name=None):
     if name in experiments:
         # send requested experiment file
         return flask.send_file(experiments[name])
+    else:
+        # not found
+        flask.abort(404)
+
+@app.route("/input_files")
+@app.route("/input_files/<name>")
+@auth.login_required
+def get_inputs(name=None):
+    inputs = {}
+
+    # look in inputs directory for each user
+    username = flask.request.authorization.username
+    user_dir = os.path.join(config.inputs_dir, username, '[!_]*')
+    for path in glob.glob(user_dir):
+        file_name, _ = os.path.splitext(os.path.basename(path))
+        inputs[file_name] = path
+
+    # send all the experiment file names
+    if name is None:
+        for filename in inputs:
+            with open(inputs[filename], 'r') as fileP:
+                hash_val = hashlib.md5(fileP.read()).digest()
+                inputs[filename] = urlsafe_b64encode(hash_val)
+        return flask.jsonify({"inputs": inputs})
+
+    # this should never happen, but better be safe
+    if '..' in name or name.startswith('/'):
+        flask.abort(404)
+
+    if name in inputs:
+        # send requested experiment file
+        return flask.send_file(inputs[name])
     else:
         # not found
         flask.abort(404)
@@ -252,9 +290,11 @@ def get_country_specific_consent():
 
     # insert the username and password into hidden fields
     replace_field = "replace-with-username-value"
-    page_content = page_content.replace(replace_field, (urlsafe_b64encode(username)))
+    page_content = page_content.replace(replace_field,
+                                        (urlsafe_b64encode(username)))
     replace_field = "replace-with-password-value"
-    page_content = page_content.replace(replace_field, (urlsafe_b64encode(password)))
+    page_content = page_content.replace(replace_field,
+                                        (urlsafe_b64encode(password)))
     replace_field = "replace-with-human-readable-username-value"
     page_content = page_content.replace(replace_field, (username))
 
