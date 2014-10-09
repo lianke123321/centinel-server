@@ -12,6 +12,7 @@ centinel_home   = os.path.join(os.path.expanduser('~'+current_user),
 # directory structure
 results_dir     = os.path.join(centinel_home, 'results')
 experiments_dir = os.path.join(centinel_home, 'experiments')
+inputs_dir = os.path.join(centinel_home, 'inputs')
 
 # sqlite
 sqlite_db       = os.path.join(centinel_home, 'db.sqlite')
