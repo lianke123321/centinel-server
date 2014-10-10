@@ -140,7 +140,7 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     files = {}
     user_dir = os.path.join(folder, username, '*')
     for path in glob.glob(user_dir):
-        file_name, _ = os.path.splitext(os.path.basename(path))
+        file_name = os.path.basename(path)
         files[file_name] = path
 
     if filename is None:
