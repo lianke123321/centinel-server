@@ -145,8 +145,8 @@ def get_user_specific_content(folder, filename=None, json_var=None):
 
     if filename is None:
         for filename in files:
-            with open(files[filename], 'r') as fileP:
-                hash_val = hashlib.md5(fileP.read()).digest()
+            with open(files[filename], 'r') as file_p:
+                hash_val = hashlib.md5(file_p.read()).digest()
                 files[filename] = urlsafe_b64encode(hash_val)
         return flask.jsonify({json_var: files})
 
@@ -248,8 +248,8 @@ def get_initial_informed_consent():
 
     # insert a hidden field into the form with the user's username and
     # password
-    with open('static/initial_informed_consent.html', 'r') as fileP:
-        initial_page = fileP.read()
+    with open('static/initial_informed_consent.html', 'r') as file_p:
+        initial_page = file_p.read()
     initial_page = initial_page.replace("replace-with-username-value",
                                         urlsafe_b64encode(username))
     initial_page = initial_page.replace("replace-with-password-value",
@@ -271,8 +271,8 @@ def get_country_specific_consent():
     if country not in constants.freedom_house_lookup:
         flask.abort(404)
 
-    with open('static/informed_consent.html', 'r') as fileP:
-        page_content = fileP.read()
+    with open('static/informed_consent.html', 'r') as file_p:
+        page_content = file_p.read()
 
     # insert the username and password into hidden fields
     replace_field = "replace-with-username-value"
@@ -324,8 +324,8 @@ def get_page_and_strip_bad_content(url, filename):
     page = re.sub(replace_href, "", page)
     replace_script = '<\s*script\s*>[\s\S]*</\s*script\s*>'
     page = re.sub(replace_script, "", page)
-    with open(filename, 'w') as fileP:
-        fileP.write(page)
+    with open(filename, 'w') as file_p:
+        file_p.write(page)
 
 @app.route("/submit_consent")
 def update_informed_consent():
