@@ -4,6 +4,7 @@ import flask
 import geoip2.errors
 import geoip2.database
 import glob
+import hashlib
 import json
 import os
 import re
@@ -50,7 +51,8 @@ def bad_request(error):
 
 @app.errorhandler(418)
 def no_consent(error):
-    return flask.make_response(flask.jsonify({'error': 'Consent not given'}), 418)
+    return flask.make_response(flask.jsonify({'error': 'Consent not given'}),
+                               418)
 
 @auth.error_handler
 def unauthorized():
@@ -116,14 +118,18 @@ def get_results():
 
     return flask.jsonify({"results": results})
 
-@app.route("/experiments")
-@app.route("/experiments/<name>")
-@auth.login_required
-def get_experiments(name=None):
-    experiments = {}
+def get_user_specific_content(folder, filename=None, json_var=None):
+    """Perform the functionality of get_experiments and get_inputs_files
 
-    # TODO: create an option to pull down all?
-    # look in experiments directory for each user
+    Params:
+
+    filename- the name of the file to retrieve or None to fetch the
+        hashes of all the files
+    folder- the directory that the user's directory is contained in
+    json_var- the name of the json variable to return containing the
+    list of hashes
+
+    """
     username = flask.request.authorization.username
 
     # make sure the informed consent has been given before we proceed
@@ -131,25 +137,43 @@ def get_experiments(name=None):
     if not client.has_given_consent:
         flask.abort(418)
 
-    user_dir = os.path.join(config.experiments_dir, username, '[!_]*.py')
+    files = {}
+    user_dir = os.path.join(folder, username, '*')
     for path in glob.glob(user_dir):
         file_name, _ = os.path.splitext(os.path.basename(path))
-        experiments[file_name] = path
+        files[file_name] = path
 
-    # send all the experiment file names
-    if name is None:
-        return flask.jsonify({"experiments": experiments.keys()})
+    if filename is None:
+        for filename in files:
+            with open(files[filename], 'r') as file_p:
+                hash_val = hashlib.md5(file_p.read()).digest()
+                files[filename] = urlsafe_b64encode(hash_val)
+        return flask.jsonify({json_var: files})
 
     # this should never happen, but better be safe
-    if '..' in name or name.startswith('/'):
+    if '..' in filename or filename.startswith('/'):
         flask.abort(404)
 
-    if name in experiments:
+    if filename in files:
         # send requested experiment file
-        return flask.send_file(experiments[name])
+        return flask.send_file(files[filename])
     else:
         # not found
         flask.abort(404)
+
+@app.route("/experiments")
+@app.route("/experiments/<name>")
+@auth.login_required
+def get_experiments(name=None):
+    return get_user_specific_content(config.experiments_dir, filename=name,
+                                     json_var="experiments")
+
+@app.route("/input_files")
+@app.route("/input_files/<name>")
+@auth.login_required
+def get_inputs(name=None):
+    return get_user_specific_content(config.inputs_dir, filename=name,
+                                     json_var="inputs")
 
 @app.route("/clients")
 @auth.login_required
@@ -224,8 +248,8 @@ def get_initial_informed_consent():
 
     # insert a hidden field into the form with the user's username and
     # password
-    with open('static/initial_informed_consent.html', 'r') as fileP:
-        initial_page = fileP.read()
+    with open('static/initial_informed_consent.html', 'r') as file_p:
+        initial_page = file_p.read()
     initial_page = initial_page.replace("replace-with-username-value",
                                         urlsafe_b64encode(username))
     initial_page = initial_page.replace("replace-with-password-value",
@@ -247,14 +271,16 @@ def get_country_specific_consent():
     if country not in constants.freedom_house_lookup:
         flask.abort(404)
 
-    with open('static/informed_consent.html', 'r') as fileP:
-        page_content = fileP.read()
+    with open('static/informed_consent.html', 'r') as file_p:
+        page_content = file_p.read()
 
     # insert the username and password into hidden fields
     replace_field = "replace-with-username-value"
-    page_content = page_content.replace(replace_field, (urlsafe_b64encode(username)))
+    page_content = page_content.replace(replace_field,
+                                        (urlsafe_b64encode(username)))
     replace_field = "replace-with-password-value"
-    page_content = page_content.replace(replace_field, (urlsafe_b64encode(password)))
+    page_content = page_content.replace(replace_field,
+                                        (urlsafe_b64encode(password)))
     replace_field = "replace-with-human-readable-username-value"
     page_content = page_content.replace(replace_field, (username))
 
@@ -298,8 +324,8 @@ def get_page_and_strip_bad_content(url, filename):
     page = re.sub(replace_href, "", page)
     replace_script = '<\s*script\s*>[\s\S]*</\s*script\s*>'
     page = re.sub(replace_script, "", page)
-    with open(filename, 'w') as fileP:
-        fileP.write(page)
+    with open(filename, 'w') as file_p:
+        file_p.write(page)
 
 @app.route("/submit_consent")
 def update_informed_consent():
