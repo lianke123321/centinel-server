@@ -28,6 +28,7 @@ class Client(db.Model):
     registered_date = db.Column(db.DateTime)
     has_given_consent = db.Column(db.Boolean)
     date_given_consent = db.Column(db.DateTime)
+    typeable_handle = db.Column(db.String(8))
     is_vpn = db.Column(db.Boolean)
     country = db.Column(db.String(COUNTRY_CODE_LEN))
 
@@ -54,6 +55,8 @@ class Client(db.Model):
                 (isinstance(kwargs[key], allowed_keys[key]))):
                 setattr(self, key, kwargs[key])
 
+        if 'typeable_handle' in kwargs:
+            self.typeable_handle = kwargs['typeable_handle']
         if 'password' in kwargs:
             self.password_hash = pwd_context.encrypt(kwargs['password'])
         if 'roles' in kwargs:
