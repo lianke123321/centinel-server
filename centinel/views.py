@@ -10,6 +10,7 @@ import os
 import random
 import re
 import requests
+import string
 import tarfile
 from werkzeug import secure_filename
 
@@ -45,10 +46,8 @@ def get_country_from_ip(ip):
 
 def generate_typeable_handle(length = 8):
     """Generate a random typeable (a-z, 1-9) string for consent URL."""
-    chars =  [ chr(c) for c in xrange(ord('a'), ord('z') + 1) ]
-    chars += [ chr(c) for c in xrange(ord('1'), ord('9') + 1) ]
-    random.shuffle(chars)
-    return ''.join(chars[:length])
+    return "".join([random.choice(string.digits + 
+                    string.ascii_lowercase) for _ in range(length)])
 
 @app.errorhandler(404)
 def not_found(error):
