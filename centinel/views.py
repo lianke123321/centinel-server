@@ -259,9 +259,8 @@ def display_initial_consent_page(username):
                                         urlsafe_b64encode(username))
     return initial_page
 
-@app.route("/consent")
-def get_initial_informed_consent_with_handle():
-    typeable_handle = flask.request.args.get('u')
+@app.route("/consent/<typeable_handle>")
+def get_initial_informed_consent_with_handle(typeable_handle):
     if typeable_handle is None:
         flask.abort(404)
     client = Client.query.filter_by(typeable_handle=typeable_handle).first()
