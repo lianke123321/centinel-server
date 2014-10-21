@@ -170,7 +170,6 @@ def get_user_specific_content(folder, filename=None, json_var=None):
         # not found
         flask.abort(404)
 
-
 @app.route("/experiments")
 @app.route("/experiments/<name>")
 @auth.login_required
@@ -198,7 +197,6 @@ def get_clients():
 
     clients = Client.query.all()
     return flask.jsonify(clients=[client.username for client in clients])
-
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -231,7 +229,6 @@ def register():
     # create a typeable handle to put in the consent form URL
     typeable_handle = generate_typeable_handle(length = 8)
     client = Client.query.filter_by(typeable_handle=typeable_handle).first()
-    print client
     # if there is a collision, generate another one
     while client is not None:
         typeable_handle = generate_typeable_handle(length = 8)
@@ -254,7 +251,6 @@ def geolocate_client():
     ip_aggr = ".".join(ip.split(".")[:3]) + ".0/24"
     country = get_country_from_ip(ip)
     return flask.jsonify({"ip": ip_aggr, "country": country})
-
 
 def display_initial_consent_page(username):
     # insert a hidden field into the form with the user's username
