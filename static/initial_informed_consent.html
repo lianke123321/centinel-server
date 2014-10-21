@@ -3,8 +3,6 @@
   <head>
     <title>Centinel Informed Consent Form</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
   </head>
 
 
@@ -43,7 +41,7 @@
 	<p>
 	  It is anticipated that there will be 15 subjects in the
 	  study overall. It is not anticipated that any will enroll at
-	  SBUStony Brook University. You are eligible to participate
+	  Stony Brook University. You are eligible to participate
 	  in this research if you have a computer that meets the
 	  software’s minimum requirements and you have signed this
 	  consent form.
@@ -122,7 +120,7 @@
 	<h3> Please select your country from the list below to get a
 	list of risks specific to your country.</h3>
 
-	<form name="get_country" action="get_informed_consent_for_country" target="_self" method="get">
+	<form name="get_country" action="/get_informed_consent_for_country" target="_self" method="get">
 	  <select name="country">
 	    <option value="AR">Argentina</option>
 	    <option value="AU">Australia</option>
@@ -173,7 +171,6 @@
 	    <option value="ZW">Zimbabwe</option>
 	  </select>
 	  <input type="hidden" name="username" value="replace-with-username-value">
-	  <input type="hidden" name="password" value="replace-with-password-value">
 	  <input type="submit" value="Get content for selected country">
 
 	</form>

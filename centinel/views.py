@@ -7,10 +7,13 @@ import glob
 import hashlib
 import json
 import os
+import random
 import re
 import requests
-from werkzeug import secure_filename
+import string
 import tarfile
+from werkzeug import secure_filename
+
 
 from centinel.models import Client, Role
 import config
@@ -40,6 +43,11 @@ def get_country_from_ip(ip):
     except (geoip2.errors.AddressNotFoundError,
             geoip2.errors.GeoIP2Error, AttributeError):
         return '--'
+
+def generate_typeable_handle(length = 8):
+    """Generate a random typeable (a-z, 1-9) string for consent URL."""
+    return "".join([random.choice(string.digits + 
+                    string.ascii_lowercase) for _ in range(length)])
 
 @app.errorhandler(404)
 def not_found(error):
@@ -189,7 +197,6 @@ def get_clients():
     clients = Client.query.all()
     return flask.jsonify(clients=[client.username for client in clients])
 
-
 @app.route("/register", methods=["POST"])
 def register():
     # TODO: use a captcha to prevent spam?
@@ -218,6 +225,15 @@ def register():
     if client is not None:
         flask.abort(400)
 
+    # create a typeable handle to put in the consent form URL
+    typeable_handle = generate_typeable_handle(length = 8)
+    client = Client.query.filter_by(typeable_handle=typeable_handle).first()
+    # if there is a collision, generate another one
+    while client is not None:
+        typeable_handle = generate_typeable_handle(length = 8)
+        client = Client.query.filter_by(typeable_handle=typeable_handle).first()
+    client_json['typeable_handle'] = typeable_handle
+
     user = Client(**client_json)
     db.session.add(user)
     db.session.commit()
@@ -225,7 +241,7 @@ def register():
     os.makedirs(os.path.join(config.results_dir, username))
     os.makedirs(os.path.join(config.experiments_dir, username))
 
-    return flask.jsonify({"status": "success"}), 201
+    return flask.jsonify({"status": "success", "typeable_handle" : typeable_handle}), 201
 
 @app.route("/geolocation")
 def geolocate_client():
@@ -235,54 +251,63 @@ def geolocate_client():
     country = get_country_from_ip(ip)
     return flask.jsonify({"ip": ip_aggr, "country": country})
 
+def display_consent_page(username, path, freedom_url=''):
+    # insert a hidden field into the form with the user's username
+    with open(path, 'r') as file_p:
+        initial_page = file_p.read()
+    initial_page = initial_page.decode('utf-8')
+    replace_field = u'replace-with-username-value'
+    initial_page = initial_page.replace(replace_field,
+                                        urlsafe_b64encode(username))
+    replace_field = u'replace-with-human-readable-username-value'
+    initial_page = initial_page.replace(replace_field, (username))
+    freedom_replacement = u'replace-this-with-freedom-house'
+    initial_page = initial_page.replace(freedom_replacement,
+                                        u'static/' + freedom_url)
+    return initial_page
+
+@app.route("/consent/<typeable_handle>")
+def get_initial_informed_consent_with_handle(typeable_handle):
+    if typeable_handle is None:
+        flask.abort(404)
+    client = Client.query.filter_by(typeable_handle=typeable_handle).first()
+    if client is None:
+        flask.abort(404)
+    if client.has_given_consent:
+        return "Consent already given."
+    username = client.username
+    return display_consent_page(username,
+                                'static/initial_informed_consent.html')
+
 @app.route("/get_initial_consent")
 def get_initial_informed_consent():
     username = flask.request.args.get('username')
-    password = flask.request.args.get('password')
-    if username is None or password is None:
+    if username is None:
         flask.abort(404)
     username = urlsafe_b64decode(str(username))
-    password = urlsafe_b64decode(str(password))
-    if not verify_password(username, password):
+    client = Client.query.filter_by(username=username).first()
+    if client is None:
         flask.abort(404)
-
-    # insert a hidden field into the form with the user's username and
-    # password
-    with open('static/initial_informed_consent.html', 'r') as file_p:
-        initial_page = file_p.read()
-    initial_page = initial_page.replace("replace-with-username-value",
-                                        urlsafe_b64encode(username))
-    initial_page = initial_page.replace("replace-with-password-value",
-                                        urlsafe_b64encode(password))
-    return initial_page
+    if client.has_given_consent:
+        return "Consent already given."
+    return display_consent_page(username,
+                                'static/initial_informed_consent.html')
 
 @app.route("/get_informed_consent_for_country")
 def get_country_specific_consent():
     username = flask.request.args.get('username')
-    password = flask.request.args.get('password')
     country = flask.request.args.get('country')
-    if username is None or password is None or country is None:
+    if username is None or country is None:
         flask.abort(404)
     username = urlsafe_b64decode(str(username))
-    password = urlsafe_b64decode(str(password))
-    if not verify_password(username, password):
+    client = Client.query.filter_by(username=username).first()
+    if client is None:
         flask.abort(404)
+    if client.has_given_consent:
+        return "Consent already given."
     country = str(country).upper()
     if country not in constants.freedom_house_lookup:
         flask.abort(404)
-
-    with open('static/informed_consent.html', 'r') as file_p:
-        page_content = file_p.read()
-
-    # insert the username and password into hidden fields
-    replace_field = "replace-with-username-value"
-    page_content = page_content.replace(replace_field,
-                                        (urlsafe_b64encode(username)))
-    replace_field = "replace-with-password-value"
-    page_content = page_content.replace(replace_field,
-                                        (urlsafe_b64encode(password)))
-    replace_field = "replace-with-human-readable-username-value"
-    page_content = page_content.replace(replace_field, (username))
 
     # if we don't already have the content from freedom house, fetch
     # it, then host it locally and insert it into the report
@@ -291,9 +316,9 @@ def get_country_specific_consent():
     # get the content from freedom house if we don't already have it
     get_page_and_strip_bad_content(constants.freedom_house_url(country),
                                    filename)
-    freedom_replacement = "replace-this-with-freedom-house"
-    page_content = page_content.replace(freedom_replacement,
-                                        "static/" + freedom_url)
+
+    page_path = 'static/informed_consent.html'
+    page_content = display_consent_page(username, page_path, freedom_url)
 
     flask.url_for('static', filename=freedom_url)
     flask.url_for('static', filename='economistDemocracyIndex.pdf')
@@ -330,14 +355,14 @@ def get_page_and_strip_bad_content(url, filename):
 @app.route("/submit_consent")
 def update_informed_consent():
     username = flask.request.args.get('username')
-    password = flask.request.args.get('password')
-    if username is None or password is None:
+    if username is None:
         flask.abort(404)
     username = urlsafe_b64decode(str(username))
-    password = urlsafe_b64decode(str(password))
-    if not verify_password(username, password):
-        flask.abort(404)
     client = Client.query.filter_by(username=username).first()
+    if client is None:
+        flask.abort(404)
+    if client.has_given_consent:
+        return "Consent already given."
     client.has_given_consent = True
     client.date_given_consent = datetime.now()
     db.session.commit()
