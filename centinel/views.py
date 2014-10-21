@@ -47,8 +47,10 @@ def generate_typeable_handle(length = 8):
     """Generate a random typeable (a-z, 1-9) string for consent URL."""
     chars =  [ chr(c) for c in xrange(ord('a'), ord('z') + 1) ]
     chars += [ chr(c) for c in xrange(ord('1'), ord('9') + 1) ]
-    random.shuffle(chars)
-    return ''.join(chars[:length])
+    handle = []
+    for i in range(length):
+        handle.append(random.choice(chars))
+    return ''.join(handle)
 
 @app.errorhandler(404)
 def not_found(error):
