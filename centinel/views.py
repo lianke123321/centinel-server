@@ -221,6 +221,7 @@ def get_system_status():
     connected and when. This does not require authentication as it
     doesn't reveal anything important (e.g. IP address, username, etc.).
     The list is shuffled each time so that numbers are randomly assigned.
+
     """
     clients = Client.query.all()
     random.shuffle(clients)
@@ -240,6 +241,7 @@ def get_system_status():
 def get_clients():
     """This is a list of clients that is fully detailed.
     This requires both authentication and admin-level access.
+
     """
     update_client_info(flask.request.authorization.username,
                        flask.request.remote_addr)
