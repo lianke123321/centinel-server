@@ -55,7 +55,9 @@ def update_client_info(username, ip):
 
     Params:
 
-    username- username of the client who contaced.
+    username-   username of the client who contaced.
+    ip-         IP address of the client
+
     """
     client = Client.query.filter_by(username=username).first()
     if client is None:
