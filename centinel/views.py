@@ -285,6 +285,9 @@ def register():
         client_json['country'] = get_country_from_ip(ip)
     client_json['ip'] = ip
     client_json['last_seen'] = datetime.now().date()
+    client_json['registered_date'] = datetime.now().date()
+    client_json['has_given_consent'] = False
+    client_json['is_vpn'] = False
     client_json['roles'] = ['client']
 
     if not username or not password:
