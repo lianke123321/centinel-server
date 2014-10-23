@@ -33,7 +33,6 @@ except (geoip2.database.maxminddb.InvalidDatabaseError, IOError):
            "will be disabled")
     reader = None
 
-
 def get_country_from_ip(ip):
     """Return the country for the given ip"""
     try:
@@ -48,6 +47,27 @@ def generate_typeable_handle(length = 8):
     """Generate a random typeable (a-z, 1-9) string for consent URL."""
     return "".join([random.choice(string.digits + 
                     string.ascii_lowercase) for _ in range(length)])
+
+def update_client_info(username, ip):
+    """Update client's information upon contact.
+    This information includes their IP address,
+    time when last seen, and country.
+
+    Params:
+
+    username-   username of the client who contaced.
+    ip-         IP address of the client
+
+    """
+    client = Client.query.filter_by(username=username).first()
+    if client is None:
+        # this should never happen
+        return
+    # aggregate the ip to /24
+    client.last_ip = ".".join(ip.split(".")[:3]) + ".0/24"
+    client.last_seen = datetime.now().date()
+    client.country = get_country_from_ip(ip)
+    db.session.commit()
 
 @app.errorhandler(404)
 def not_found(error):
@@ -74,6 +94,8 @@ def get_recommended_version():
 @app.route("/results", methods=['POST'])
 @auth.login_required
 def submit_result():
+    update_client_info(flask.request.authorization.username,
+                       flask.request.remote_addr)
     # abort if there is no result file
     if not flask.request.files:
         flask.abort(400)
@@ -108,6 +130,8 @@ def submit_result():
 @app.route("/results")
 @auth.login_required
 def get_results():
+    update_client_info(flask.request.authorization.username,
+                       flask.request.remote_addr)
     results = {}
 
     # TODO: cache the list of results?
@@ -138,6 +162,8 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     list of hashes
 
     """
+    update_client_info(flask.request.authorization.username,
+                       flask.request.remote_addr)
     username = flask.request.authorization.username
 
     # make sure the informed consent has been given before we proceed
@@ -169,10 +195,14 @@ def get_user_specific_content(folder, filename=None, json_var=None):
         # not found
         flask.abort(404)
 
+
+
 @app.route("/experiments")
 @app.route("/experiments/<name>")
 @auth.login_required
 def get_experiments(name=None):
+    update_client_info(flask.request.authorization.username,
+                       flask.request.remote_addr)
     return get_user_specific_content(config.experiments_dir, filename=name,
                                      json_var="experiments")
 
@@ -180,13 +210,41 @@ def get_experiments(name=None):
 @app.route("/input_files/<name>")
 @auth.login_required
 def get_inputs(name=None):
+    update_client_info(flask.request.authorization.username,
+                       flask.request.remote_addr)
     return get_user_specific_content(config.inputs_dir, filename=name,
                                      json_var="inputs")
 
 @app.route("/clients")
+def get_system_status():
+    """This is a list of clients and the countries from which they last
+    connected and when. This does not require authentication as it
+    doesn't reveal anything important (e.g. IP address, username, etc.).
+    The list is shuffled each time so that numbers are randomly assigned.
+
+    """
+    clients = Client.query.all()
+    random.shuffle(clients)
+    results = []
+    number = 0
+    for client in clients:
+        info = {}
+        info['num'] = number
+        info['country'] = client.country
+        info['last_seen'] = client.last_seen
+        results.append(info)
+        number += 1
+    return flask.jsonify({ "clients" : results })
+
+@app.route("/client_details")
 @auth.login_required
 def get_clients():
+    """This is a list of clients that is fully detailed.
+    This requires both authentication and admin-level access.
 
+    """
+    update_client_info(flask.request.authorization.username,
+                       flask.request.remote_addr)
     # ensure that the client has the admin role
     username = flask.request.authorization.username
     user = Client.query.filter_by(username=username).first()
@@ -194,8 +252,19 @@ def get_clients():
     if user not in admin.users:
         return unauthorized()
 
+    results = []
     clients = Client.query.all()
-    return flask.jsonify(clients=[client.username for client in clients])
+    for client in clients:
+        info = {}
+        info['username']  = client.username
+        info['handle']    = client.typeable_handle
+        info['country']   = client.country
+        info['last_seen'] = client.last_seen
+        info['last_ip']   = client.last_ip
+        info['is_vpn']    = client.is_vpn
+        info['consented'] = client.has_given_consent
+        results.append(info)
+    return flask.jsonify({ "clients" : results })
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -215,7 +284,7 @@ def register():
     if country is None or (len(country) != 2):
         client_json['country'] = get_country_from_ip(ip)
     client_json['ip'] = ip
-    client_json['last_seen'] = datetime.now()
+    client_json['last_seen'] = datetime.now().date()
     client_json['roles'] = ['client']
 
     if not username or not password:
@@ -364,7 +433,7 @@ def update_informed_consent():
     if client.has_given_consent:
         return "Consent already given."
     client.has_given_consent = True
-    client.date_given_consent = datetime.now()
+    client.date_given_consent = datetime.now().date()
     db.session.commit()
     response = ("Success! Thanks for registering; you are ready to start "
                 "sending us censorship measurement results.")
