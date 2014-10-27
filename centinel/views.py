@@ -65,7 +65,7 @@ def update_client_info(username, ip):
         return
     # aggregate the ip to /24
     client.last_ip = ".".join(ip.split(".")[:3]) + ".0/24"
-    client.last_seen = datetime.now().date()
+    client.last_seen = datetime.now()
     client.country = get_country_from_ip(ip)
     db.session.commit()
 
@@ -285,8 +285,8 @@ def register():
     if country is None or (len(country) != 2):
         client_json['country'] = get_country_from_ip(ip)
     client_json['ip'] = ip
-    client_json['last_seen'] = datetime.now().date()
-    client_json['registered_date'] = datetime.now().date()
+    client_json['last_seen'] = datetime.now()
+    client_json['registered_date'] = datetime.now()
     client_json['has_given_consent'] = False
     client_json['is_vpn'] = False
     client_json['roles'] = ['client']
