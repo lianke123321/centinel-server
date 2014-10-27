@@ -231,7 +231,8 @@ def get_system_status():
         info = {}
         info['num'] = number
         info['country'] = client.country
-        info['last_seen'] = client.last_seen
+        info['last_seen'] = str( client.last_seen.date() )
+        info['is_vpn']    = client.is_vpn
         results.append(info)
         number += 1
     return flask.jsonify({ "clients" : results })
