@@ -24,6 +24,10 @@ import config
 from centinel.models import Client
 
 
+# constants
+DAYS_SINCE_ACTIVE = 30
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     country_help = ('Two letter country code of the country to run the'
@@ -75,12 +79,12 @@ def find_clients(country, num_clients):
     """
     clients = []
     potential_clients = Client.query.filter_by(country=country).all()
-    month_diff = timedelta(days=30)
+    month_diff = timedelta(days=DAYS_SINCE_ACTIVE)
     for client in potential_clients:
         if client.last_seen < datetime.now() - month_diff:
             continue
         if num_clients is not None and len(clients) >= num_clients:
-            continue
+            break
         clients.append(client.username)
     return clients
 
