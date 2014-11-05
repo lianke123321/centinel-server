@@ -41,11 +41,11 @@ def parse_args():
                 "Python file following the format as other experiments "
                 "(see the example template or ping.py for how to do this)")
     parser.add_argument('--experiment', '-e', help=exp_help, default=None)
-    freq_help = ("How often the experiment should be run in hours, i.e. "
-                 "enter 4 to run the experiment every 4 hours. If no "
+    freq_help = ("How often the experiment should be run in minutes, i.e. "
+                 "enter 60 to run the experiment every hour. If no "
                  "frequency information is specified, the measurement will "
-                 "run every hour")
-    parser.add_argument('--frequency', '-f', help=freq_help, default=1)
+                 "run every time the client does a measurement")
+    parser.add_argument('--frequency', '-f', help=freq_help, default=None)
     remove_help = ("Remove the experiment or data file with the specified "
                    "name from the target clients. Note that this option will "
                    "be applied to both data and experiments if both the -d "
@@ -54,7 +54,7 @@ def parse_args():
                         action='store_true')
     args = parser.parse_args()
 
-    if args.frequency != 1 and args.experiment is None:
+    if args.frequency is not None and args.experiment is None:
         parser.error("Specifying the frequency is only a valid option if you "
                      "are specifying an experiment to run. You must specify "
                      "a new experiment to schedule as well with the -e option")
@@ -160,12 +160,12 @@ def copy_frequency(clients, freq, exp):
 
     Params:
     clients- the clients to update the frequencies for
-    freq- how many hours should elapse between runs, i.e. enter 1 to
+    freq- how many minutes should elapse between runs, i.e. enter 60 to
         run every hour
     exp- the experiment to adjust the frequency for
 
     """
-    exp = os.path.basename(exp)
+    exp_name, _ = os.path.splitext(os.path.basename(exp))
     for client in clients:
         # if the experiment doesn't exist for that user, then don't
         # adjust the frequency
@@ -178,7 +178,7 @@ def copy_frequency(clients, freq, exp):
         if os.path.exists(filename):
             with open(filename, 'r') as file_p:
                 freqs = json.load(file_p)
-        freqs[exp] = {'last_seen': 0, 'frequency': freq}
+        freqs[exp_name] = {'last_run': 0, 'frequency': int(freq) * 60}
         # Note: as mentioned in the first few introductory lines, this
         # section presents a race condition if another instance of the
         # scheduler is running at the same time and your experiment
@@ -249,5 +249,5 @@ if __name__ == "__main__":
             copy_exps(clients, args.experiment)
 
     # add the frequency info as appropriate
-    if not args.remove and args.frequency is not 1:
+    if not args.remove and args.frequency is not None:
         copy_frequency(clients, args.frequency, args.experiment)
