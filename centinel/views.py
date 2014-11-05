@@ -313,6 +313,7 @@ def register():
 
     os.makedirs(os.path.join(config.results_dir, username))
     os.makedirs(os.path.join(config.experiments_dir, username))
+    os.makedirs(os.path.join(config.inputs_dir, username))
 
     return flask.jsonify({"status": "success", "typeable_handle" : typeable_handle}), 201
 
