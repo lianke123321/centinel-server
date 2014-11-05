@@ -13,18 +13,19 @@
 
 
 import argparse
+from datetime import datetime, timedelta
 import json
 import os
 import os.path
+import sys
 
 
-import centinel
 import config
 from centinel.models import Client
 
 
 def parse_args():
-    parser = argpars.ArgumentParser()
+    parser = argparse.ArgumentParser()
     country_help = ('Two letter country code of the country to run the'
                     'experiment in')
     parser.add_argument('--country', '-c', help=country_help, required=True)
@@ -52,7 +53,7 @@ def parse_args():
     parser.add_argument('--remove', '-r', help=remove_help, default=False,
                         action='store_true')
     args = parser.parse_args()
-    
+
     if args.frequency != 1 and args.experiment is None:
         parser.error("Specifying the frequency is only a valid option if you "
                      "are specifying an experiment to run. You must specify "
@@ -74,7 +75,7 @@ def find_clients(country, num_clients):
     """
     clients = []
     potential_clients = Client.query.filter_by(country=country).all()
-    month_diff = time
+    month_diff = timedelta(days=30)
     for client in potential_clients:
         if client.last_seen < datetime.now() - month_diff:
             continue
@@ -92,14 +93,14 @@ def copy_data(clients, data):
     data- the data file to copy into each user's directory
 
     """
-    if not os.path.exists(data) and not remove:
+    if not os.path.exists(data):
         print "Error: invalid data file to copy from"
         return
     with open(data, 'r') as file_p:
         content = file_p.read()
     basename = os.path.basename(data)
     for client in clients:
-        filename = os.path.join(config.data_dir, client, basename)
+        filename = os.path.join(config.inputs_dir, client, basename)
         with open(filename, 'w') as file_p:
             file_p.write(content)
 
@@ -112,8 +113,9 @@ def remove_data(clients, data):
     data- the data file basename to remove
 
     """
+    data = os.path.basename(data)
     for client in clients:
-        filename = os.path.join(config.data_dir, client, basename)
+        filename = os.path.join(config.inputs_dir, client, data)
         if os.path.exists(filename):
             os.remove(filename)
 
@@ -146,6 +148,7 @@ def remove_exps(clients, exp):
     exp- the experiment file basename to remove
 
     """
+    basename = os.path.basename(exp)
     for client in clients:
         filename = os.path.join(config.experiments_dir, client, basename)
         if os.path.exists(filename):
@@ -163,7 +166,7 @@ def copy_frequency(clients, freq, exp):
 
     """
     exp = os.path.basename(exp)
-    for clients in clients:
+    for client in clients:
         # if the experiment doesn't exist for that user, then don't
         # adjust the frequency
         exp_file = os.path.join(config.experiments_dir, client, exp)
@@ -174,14 +177,14 @@ def copy_frequency(clients, freq, exp):
         freqs = {}
         if os.path.exists(filename):
             with open(filename, 'r') as file_p:
-                freq = json.load(file_p)
+                freqs = json.load(file_p)
         freqs[exp] = {'last_seen': 0, 'frequency': freq}
         # Note: as mentioned in the first few introductory lines, this
         # section presents a race condition if another instance of the
         # scheduler is running at the same time and your experiment
         # may not be scheduled
         with open(filename, 'w') as file_p:
-            json.dump(file_p, freqs)
+            json.dump(freqs, file_p)
 
 
 def remove_frequency(clients, exp):
@@ -193,21 +196,24 @@ def remove_frequency(clients, exp):
 
     """
     exp = os.path.basename(exp)
-    for clients in clients:
+    for client in clients:
         filename = os.path.join(config.experiments_dir, client,
                                 "scheduler.info")
         freqs = {}
         if os.path.exists(filename):
             with open(filename, 'r') as file_p:
-                freq = json.load(file_p)
+                freqs = json.load(file_p)
         if freqs.get(exp) is not None:
             del freqs[exp]
+        if freqs == {}:
+            os.remove(filename)
+            return
         # Note: as mentioned in the first few introductory lines, this
         # section presents a race condition if another instance of the
         # scheduler is running at the same time and your experiment
         # may not be scheduled
         with open(filename, 'w') as file_p:
-            json.dump(file_p, freqs)
+            json.dump(freqs, file_p)
 
 
 if __name__ == "__main__":
@@ -225,7 +231,7 @@ if __name__ == "__main__":
                "you would have scheduled experiments on")
         for client in clients:
             print "{0}".format(client)
-        return
+        sys.exit(0)
 
     # copy the data files if necessary
     if args.data is not None:
@@ -243,5 +249,5 @@ if __name__ == "__main__":
             copy_exps(clients, args.experiment)
 
     # add the frequency info as appropriate
-    if args.frequency is not 1:
+    if not args.remove and args.frequency is not 1:
         copy_frequency(clients, args.frequency, args.experiment)
