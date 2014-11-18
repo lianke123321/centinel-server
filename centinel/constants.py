@@ -14,11 +14,11 @@ freedom_house_lookup = {'AR': 'argentina', 'AU': 'australia', 'AZ': 'azerbaijan'
                         "KG": 'krygyzstan', "LY": 'Libya', "MY": 'Malaysia',
                         "MX": 'mexico', "MM": 'burma', "NG": 'Nigeria',
                         "PK": 'Pakistan', "PH": 'Philippines', "RU": 'Russia',
-                        "RW": 'Rwanda', "SA": 'Saudi Arabia', "ZA": 'South Africa',
-                        "KR": 'South Korea', "LK": 'Sri Lanka', "SY": 'Syria',
+                        "RW": 'Rwanda', "SA": 'Saudi-Arabia', "ZA": 'South-Africa',
+                        "KR": 'South-Korea', "LK": 'Sri-Lanka', "SY": 'Syria',
                         "TH": 'Thailand', "TN": 'Tunisia', "TR": 'Turkey',
-                        "UG": 'Uganda', "UA": 'Ukraine', "GB": 'United Kingdom',
-                        "US": 'United States', "UZ": 'Uzbekistan',"VE": 'Venezuela',
+                        "UG": 'Uganda', "UA": 'Ukraine', "GB": 'United-Kingdom',
+                        "US": 'United-States', "UZ": 'Uzbekistan',"VE": 'Venezuela',
                         "VN": 'Vietnam', "ZW": 'Zimbabwe'}
 def freedom_house_url(country_code):
     return freedom_house_url_base + freedom_house_lookup[country_code]
