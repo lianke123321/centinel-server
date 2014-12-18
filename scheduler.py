@@ -152,7 +152,6 @@ def copy_exps(clients, exp):
             os.makedirs(client_experiments_dir)
 
         filename = os.path.join(client_experiments_dir, basename)
-        filename = os.path.join(config.experiments_dir, client, basename)
         with open(filename, 'w') as file_p:
             file_p.write(content)
 
