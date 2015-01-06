@@ -104,7 +104,13 @@ def copy_data(clients, data):
         content = file_p.read()
     basename = os.path.basename(data)
     for client in clients:
-        filename = os.path.join(config.inputs_dir, client, basename)
+        client_data_dir = os.path.join(config.inputs_dir, client)
+        if not os.path.exists(client_data_dir):
+            print ("Error: client data directory does not exist! "
+                         "%s" % (client_data_dir))
+            continue
+
+        filename = os.path.join(client_data_dir, basename)
         with open(filename, 'w') as file_p:
             file_p.write(content)
 
@@ -139,7 +145,13 @@ def copy_exps(clients, exp):
         content = file_p.read()
     basename = os.path.basename(exp)
     for client in clients:
-        filename = os.path.join(config.experiments_dir, client, basename)
+        client_experiments_dir = os.path.join(config.experiments_dir, client)
+        if not os.path.exists(client_experiments_dir):
+            print ("Error: client experiments directory does not exist! "
+                         "%s" % (client_data_dir))
+            continue
+
+        filename = os.path.join(client_experiments_dir, basename)
         with open(filename, 'w') as file_p:
             file_p.write(content)
 
