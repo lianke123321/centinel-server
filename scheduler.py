@@ -106,9 +106,9 @@ def copy_data(clients, data):
     for client in clients:
         client_data_dir = os.path.join(config.inputs_dir, client)
         if not os.path.exists(client_data_dir):
-            print ("Creating data directory in "
+            print ("Error: client data directory does not exist! "
                          "%s" % (client_data_dir))
-            os.makedirs(client_data_dir)
+            continue
 
         filename = os.path.join(client_data_dir, basename)
         with open(filename, 'w') as file_p:
@@ -147,9 +147,9 @@ def copy_exps(clients, exp):
     for client in clients:
         client_experiments_dir = os.path.join(config.experiments_dir, client)
         if not os.path.exists(client_experiments_dir):
-            print ("Creating experiments directory in "
-                         "%s" % (client_experiments_dir))
-            os.makedirs(client_experiments_dir)
+            print ("Error: client experiments directory does not exist! "
+                         "%s" % (client_data_dir))
+            continue
 
         filename = os.path.join(client_experiments_dir, basename)
         with open(filename, 'w') as file_p:
