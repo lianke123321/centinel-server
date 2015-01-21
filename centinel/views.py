@@ -260,6 +260,7 @@ def get_clients():
         info['username']  = client.username
         info['handle']    = client.typeable_handle
         info['country']   = client.country
+        info['retistered_date'] = client.registered_date
         info['last_seen'] = client.last_seen
         info['last_ip']   = client.last_ip
         info['is_vpn']    = client.is_vpn
