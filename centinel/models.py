@@ -82,6 +82,8 @@ class Client(db.Model):
         # case we need to remove it for security reasons or traveling
         if 'last_seen' in kwargs:
             self.last_seen = kwargs['last_seen']
+        if 'registered_date' in kwargs:
+            self.last_seen = kwargs['registered_date']
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)
