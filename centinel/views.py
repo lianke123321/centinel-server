@@ -176,10 +176,10 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     # is requested.
     if (json_var == "experiments" and 
         (filename is None or filename == "scheduler.info")):
-        country_scheduler_filename = os.path.join(config.experiments_dir,
-                                                  client.country, "scheduler.info")
         global_scheduler_filename = os.path.join(config.experiments_dir,
                                                  "global", "scheduler.info")
+        country_scheduler_filename = os.path.join(config.experiments_dir,
+                                                  client.country, "scheduler.info")
         client_scheduler_filename = os.path.join(config.experiments_dir,
                                                  username, "scheduler.info")
 
