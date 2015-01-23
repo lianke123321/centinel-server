@@ -14,14 +14,18 @@
 # directory (which is created if it doesn't exist). Everything
 # else will go to "global".
 
+
 import argparse
 import os
-from os import path
 import re
 import requests
-from requests.auth import HTTPDigestAuth
 import string
+
+
+from os import path
+from requests.auth import HTTPDigestAuth
 from urlparse import urljoin
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -52,6 +56,7 @@ def parse_args():
         parser.error('Digest authentication has been enabled but no username and password '
                      'given.')
     return args
+
 
 if __name__ == "__main__":
 
