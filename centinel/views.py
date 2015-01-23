@@ -176,22 +176,22 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     # is requested.
     if (json_var == "experiments" and 
         (filename is None or filename == "scheduler.info")):
-        client_scheduler_filename = os.path.join(config.experiments_dir,
-                                                 username, "scheduler.info")
         country_scheduler_filename = os.path.join(config.experiments_dir,
                                                   client.country, "scheduler.info")
         global_scheduler_filename = os.path.join(config.experiments_dir,
                                                  "global", "scheduler.info")
+        client_scheduler_filename = os.path.join(config.experiments_dir,
+                                                 username, "scheduler.info")
 
         freqs = {}
-        if os.path.exists(client_scheduler_filename):
-            with open(client_scheduler_filename, 'r') as file_p:
-                freqs.update(json.load(file_p))
         if os.path.exists(country_scheduler_filename):
             with open(country_scheduler_filename, 'r') as file_p:
                 freqs.update(json.load(file_p))
         if os.path.exists(global_scheduler_filename):
             with open(global_scheduler_filename, 'r') as file_p:
+                freqs.update(json.load(file_p))
+        if os.path.exists(client_scheduler_filename):
+            with open(client_scheduler_filename, 'r') as file_p:
                 freqs.update(json.load(file_p))
 
         with open(client_scheduler_filename, 'w') as file_p:
