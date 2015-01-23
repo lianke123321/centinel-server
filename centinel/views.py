@@ -184,11 +184,11 @@ def get_user_specific_content(folder, filename=None, json_var=None):
                                                  username, "scheduler.info")
 
         freqs = {}
-        if os.path.exists(country_scheduler_filename):
-            with open(country_scheduler_filename, 'r') as file_p:
-                freqs.update(json.load(file_p))
         if os.path.exists(global_scheduler_filename):
             with open(global_scheduler_filename, 'r') as file_p:
+                freqs.update(json.load(file_p))
+        if os.path.exists(country_scheduler_filename):
+            with open(country_scheduler_filename, 'r') as file_p:
                 freqs.update(json.load(file_p))
         if os.path.exists(client_scheduler_filename):
             with open(client_scheduler_filename, 'r') as file_p:
@@ -198,6 +198,21 @@ def get_user_specific_content(folder, filename=None, json_var=None):
             json.dump(freqs, file_p)
 
     files = {}
+
+    # include global baseline content
+    global_dir = os.path.join(folder, "global")
+    if os.path.exists(global_dir):
+        for path in glob.glob(os.path.join(global_dir, "*")):
+            file_name = os.path.basename(path)
+            # avoid sending the global scheduler here
+            # the only scheduler file sent must be the unified scheduler
+            # in the client's experiments dir.
+            if file_name == "scheduler.info":
+                continue
+            files[file_name] = path
+    else:
+        print ("Global baseline folder \"%s\" "
+               "doesn't exist!" %(global_dir))
 
     # include country-specific baseline content
     country_specific_dir = os.path.join(folder, client.country)
@@ -215,21 +230,6 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     else:
         print ("Country baseline folder %s "
                "doesn't exist!" %(country_specific_dir))
-
-    # include global baseline content
-    global_dir = os.path.join(folder, "global")
-    if os.path.exists(global_dir):
-        for path in glob.glob(os.path.join(global_dir, "*")):
-            file_name = os.path.basename(path)
-            # avoid sending the global scheduler here
-            # the only scheduler file sent must be the unified scheduler
-            # in the client's experiments dir.
-            if file_name == "scheduler.info":
-                continue
-            files[file_name] = path
-    else:
-        print ("Global baseline folder \"%s\" "
-               "doesn't exist!" %(global_dir))
 
     user_dir = os.path.join(folder, username, '*')
     for path in glob.glob(user_dir):
