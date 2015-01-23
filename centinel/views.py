@@ -198,10 +198,6 @@ def get_user_specific_content(folder, filename=None, json_var=None):
             json.dump(freqs, file_p)
 
     files = {}
-    user_dir = os.path.join(folder, username, '*')
-    for path in glob.glob(user_dir):
-        file_name = os.path.basename(path)
-        files[file_name] = path
 
     # include country-specific baseline content
     country_specific_dir = os.path.join(folder, client.country)
@@ -234,6 +230,11 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     else:
         print ("Global baseline folder \"%s\" "
                "doesn't exist!" %(global_dir))
+
+    user_dir = os.path.join(folder, username, '*')
+    for path in glob.glob(user_dir):
+        file_name = os.path.basename(path)
+        files[file_name] = path
 
     if filename is None:
         for filename in files:
