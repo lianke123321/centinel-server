@@ -60,7 +60,6 @@ def parse_args():
 
 if __name__ == "__main__":
 
-    print "Downloading list index."
     args = parse_args()
     url = args.url
     if args.user is not None:
@@ -75,6 +74,7 @@ if __name__ == "__main__":
 
     directory = os.path.join(args.output, "global")
     req = requests.get(url, auth=auth)
+    print "Downloading list index."
     req.raise_for_status()
     csvs = re.findall('href=\"([^\'\.\"]+\.csv)\"', req.text)
 
