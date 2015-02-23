@@ -33,6 +33,7 @@ if __name__ == "__main__":
         context = SSL.Context(SSL.TLSv1_METHOD)
         context.use_privatekey_file(config.ssl_key)
         context.use_certificate_file(config.ssl_cert)
+        context.load_verify_locations(config.ssl_chain)
 
     # Also, I shouldn't have to say this, but *DO NOT COMMIT THE
     # KEY*. Under no circumstances should the key be committed
