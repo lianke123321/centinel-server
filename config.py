@@ -21,3 +21,4 @@ maxmind_db      = os.path.join(centinel_home, 'maxmind.mmdb')
 # web server
 ssl_cert = "server.iclab.org.crt"
 ssl_key  = "server.iclab.org.key"
+ssl_chain = "server.iclab.org_bundle.crt"
