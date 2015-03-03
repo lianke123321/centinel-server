@@ -14,8 +14,9 @@ results_dir     = os.path.join(centinel_home, 'results')
 experiments_dir = os.path.join(centinel_home, 'experiments')
 inputs_dir = os.path.join(centinel_home, 'inputs')
 
-# sqlite
-sqlite_db       = os.path.join(centinel_home, 'db.sqlite')
+# sql
+DATABASE_URI = "postgresql://root:root@localhost/centinel"
+
 maxmind_db      = os.path.join(centinel_home, 'maxmind.mmdb')
 
 # web server
