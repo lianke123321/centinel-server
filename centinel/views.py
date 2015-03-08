@@ -117,14 +117,6 @@ def submit_result():
 
     result_file.save(file_path)
 
-    if tarfile.is_tarfile(file_path):
-        with tarfile.open(file_path, "r:bz2") as tar:
-            members = [tarinfo for tarinfo in tar
-                       if os.path.splitext(tarinfo.name)[1] == ".json"]
-            tar.extractall(os.path.join(config.results_dir, client_dir),
-                           members=members)
-        os.remove(file_path)
-
     return flask.jsonify({"status": "success"}), 201
 
 @app.route("/results")
