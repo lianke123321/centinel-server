@@ -45,6 +45,8 @@ class Client(db.Model):
         # type
 
         allowed_keys = {"username": "string", "is_vpn": bool,
+                        "registered_date": datetime,
+                        "last_seen": datetime,
                         "has_given_consent": bool,
                         "date_given_consent": datetime}
         for key in kwargs:
@@ -77,13 +79,6 @@ class Client(db.Model):
         country = kwargs.get('country')
         if country is not None and (len(country) == 2):
             self.country = country
-        # if we have a date for the last time the client was seen,
-        # then add it, otherwise, we won't add the last seen date in
-        # case we need to remove it for security reasons or traveling
-        if 'last_seen' in kwargs:
-            self.last_seen = kwargs['last_seen']
-        if 'registered_date' in kwargs:
-            self.last_seen = kwargs['registered_date']
 
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hash)

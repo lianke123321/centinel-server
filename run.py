@@ -17,8 +17,17 @@ if __name__ == "__main__":
     db = centinel.db
     app = centinel.app   
     db.create_all()
-    db.session.add(centinel.models.Role('admin'))
-    db.session.add(centinel.models.Role('client'))
+
+    Role = centinel.models.Role
+
+    admin_role = db.session.query(Role).filter(Role.name=='admin').all()
+    if len(admin_role) == 0:
+        db.session.add(Role('admin'))
+
+    client_role = db.session.query(Role).filter(Role.name=='client').all()
+    if len(client_role) == 0:
+        db.session.add(Role('client'))
+
     db.session.commit()
     if args.adhoc:
         context='adhoc'
