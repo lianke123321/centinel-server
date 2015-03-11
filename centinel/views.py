@@ -345,7 +345,15 @@ def register():
     client_json['last_seen'] = datetime.now()
     client_json['registered_date'] = datetime.now()
     client_json['has_given_consent'] = False
-    client_json['is_vpn'] = False
+
+    # a VPN client does not need to give consent
+    if client_json.get('is_vpn'):
+        client_json['is_vpn'] = True
+        client_json['has_given_consent'] = True
+        client_json['date_given_consent'] = datetime.now()
+    else:
+        client_json['is_vpn'] = False
+
     client_json['roles'] = ['client']
 
     if not username or not password:
