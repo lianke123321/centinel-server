@@ -388,7 +388,7 @@ def geolocate(custom_ip=None):
         country = get_country_from_ip(ip)
     except Exception as exp:
         return flask.jsonify({"ip": ip_aggr,
-                              "error": str(exp)})
+                              "error": str(exp)}), 404
     return flask.jsonify({"ip": ip_aggr, "country": country})
 
 def display_consent_page(username, path, freedom_url=''):
