@@ -48,7 +48,7 @@ def generate_typeable_handle(length = 8):
     return "".join([random.choice(string.digits + 
                     string.ascii_lowercase) for _ in range(length)])
 
-def update_client_info(username, ip):
+def update_client_info(username, ip, country=None):
     """Update client's information upon contact.
     This information includes their IP address,
     time when last seen, and country.
@@ -66,7 +66,17 @@ def update_client_info(username, ip):
     # aggregate the ip to /24
     client.last_ip = ".".join(ip.split(".")[:3]) + ".0/24"
     client.last_seen = datetime.now()
-    client.country = get_country_from_ip(ip)
+    # if the client explicitely sets their country,
+    # update the value based on that (used by VPN).
+    if country is not None:
+        client.country = country
+    else:
+        # don't update country for VPN clients unless
+        # it was manually set.
+        # this way we avoid changing country value when
+        # uploading results without VPN connection.
+        if not client.is_vpn:
+            client.country = get_country_from_ip(ip)
     db.session.commit()
 
 @app.errorhandler(404)
@@ -154,8 +164,6 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     list of hashes
 
     """
-    update_client_info(flask.request.authorization.username,
-                       flask.request.remote_addr)
     username = flask.request.authorization.username
 
     # make sure the informed consent has been given before we proceed
@@ -247,6 +255,21 @@ def get_user_specific_content(folder, filename=None, json_var=None):
         # not found
         flask.abort(404)
 
+# in case the client wants to specify the country explicitly (VPN).
+@app.route("/set_country/<country>")
+@auth.login_required
+def set_country(country):
+    if country is None:
+        flask.abort(404)
+
+    try:
+        update_client_info(flask.request.authorization.username,
+                           flask.request.remote_addr, country)
+    except Exception as exp:
+        logging.error("Error setting country"
+                      " %s: %s" % (country, exp))
+        return flask.jsonify({ "status": "failure" }), 400
+    return flask.jsonify({ "status": "failure" }), 200
 
 
 @app.route("/experiments")
