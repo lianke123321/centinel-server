@@ -374,12 +374,21 @@ def register():
 
     return flask.jsonify({"status": "success", "typeable_handle" : typeable_handle}), 201
 
-@app.route("/geolocation")
-def geolocate_client():
-    # get the ip and aggregate to the /24
-    ip = flask.request.remote_addr
-    ip_aggr = ".".join(ip.split(".")[:3]) + ".0/24"
-    country = get_country_from_ip(ip)
+@app.route("/geolocate/")
+@app.route("/geolocate/<custom_ip>")
+def geolocate(custom_ip=None):
+    if custom_ip is not None:
+        ip = custom_ip
+    else:
+        ip = flask.request.remote_addr
+
+    try:
+        # aggregate ip to the /24
+        ip_aggr = ".".join(ip.split(".")[:3]) + ".0/24"
+        country = get_country_from_ip(ip)
+    except Exception as exp:
+        return flask.jsonify({"ip": ip_aggr,
+                              "error": str(exp)})
     return flask.jsonify({"ip": ip_aggr, "country": country})
 
 def display_consent_page(username, path, freedom_url=''):
