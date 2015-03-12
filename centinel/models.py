@@ -44,7 +44,8 @@ class Client(db.Model):
         # custom functionality. Also do type checking on the variable
         # type
 
-        allowed_keys = {"username": "string", "is_vpn": bool,
+        allowed_keys = {"username": "string",
+                        "is_vpn": bool,
                         "registered_date": datetime,
                         "last_seen": datetime,
                         "has_given_consent": bool,
@@ -73,7 +74,6 @@ class Client(db.Model):
             if "/" not in ip:
                 ip = ".".join(ip.split(".")[:3]) + ".0/24"
             self.last_ip = ip
-            self.is_vpn = kwargs.get('vpn')
         if 'consent' in kwargs:
             self.date_given_consent = datetime.now()
         country = kwargs.get('country')
