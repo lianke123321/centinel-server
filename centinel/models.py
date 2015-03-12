@@ -22,7 +22,7 @@ class Client(db.Model):
     __tablename__ = 'clients'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(36), index=True)  # uuid length=36
-    password_hash = db.Column(db.String(119))
+    password_hash = db.Column(db.String(130))
     last_ip = db.Column(db.String(IP_ADDR_LEN))
     last_seen = db.Column(db.DateTime)
     registered_date = db.Column(db.DateTime)
