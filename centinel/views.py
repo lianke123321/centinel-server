@@ -287,8 +287,23 @@ def set_country(country):
         logging.error("Error setting country"
                       " %s: %s" % (country, exp))
         return flask.jsonify({ "status": "failure" }), 400
-    return flask.jsonify({ "status": "failure" }), 200
+    return flask.jsonify({ "status": "success" }), 200
 
+# in case the client wants to specify the IP address explicitly (VPN).
+@app.route("/set_ip/<ip_address>")
+@auth.login_required
+def set_ip(ip_address):
+    if ip_address is None:
+        flask.abort(404)
+
+    try:
+        update_client_info(flask.request.authorization.username,
+                           ip=ip_address)
+    except Exception as exp:
+        logging.error("Error setting IP address"
+                      " %s: %s" % (ip_address, exp))
+        return flask.jsonify({ "status": "failure" }), 400
+    return flask.jsonify({ "status": "success" }), 200
 
 @app.route("/experiments")
 @app.route("/experiments/<name>")
