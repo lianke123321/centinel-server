@@ -336,7 +336,7 @@ def get_system_status():
                 asn = as_lookup.ip_to_asn(client.last_ip.split('/')[0])
                 owner = as_lookup.asn_to_owner(asn)
                 info['asn'] = asn
-                info['as_owner'] =  owner
+                info['as_owner'] =  owner.decode('utf-8', 'ignore')
             except Exception as exp:
                 logging.error("Error looking up AS info for "
                               "%s: %s" % (client.last_ip, exp))
