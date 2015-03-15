@@ -1,4 +1,5 @@
 from base64 import urlsafe_b64decode, urlsafe_b64encode
+import config
 from datetime import datetime
 import flask
 import geoip2.errors
@@ -6,6 +7,7 @@ import geoip2.database
 import glob
 import hashlib
 import json
+import logging
 import os
 import random
 import re
@@ -15,9 +17,9 @@ import tarfile
 from werkzeug import secure_filename
 
 
-from centinel.models import Client, Role
-import config
+from centinel.as_info import ASInfo
 from centinel import constants
+from centinel.models import Client, Role
 
 import centinel
 app = centinel.app
@@ -30,8 +32,24 @@ except (geoip2.database.maxminddb.InvalidDatabaseError, IOError):
     print ("You appear to have an error in your geolocation database.\n"
            "Your database is either corrupt or does not exist\n"
            "until you download a new copy, geolocation functionality\n"
-           "will be disabled")
+           "will be disabled.")
     reader = None
+
+try:
+    print "Loading AS info database..."
+    as_lookup = ASInfo(config.net_to_asn_file, config.asn_to_owner_file)
+    print "Done loading AS info database."
+except Exception as exp:
+    print ('Error loading ASN lookup information.\n'
+           'You need a copy of each ASN database file to enable this\n'
+           'feature.\n'
+           'This can be done by running the following commands:\n\n'
+           '# curl -o %s '
+           'http://thyme.apnic.net/current/data-used-autnums\n'
+           '# curl -o %s '
+           'http://thyme.apnic.net/current/data-raw-table\n'
+           % (config.asn_to_owner_file, config.net_to_asn_file))
+    as_lookup = None
 
 def get_country_from_ip(ip):
     """Return the country for the given ip"""
@@ -269,8 +287,23 @@ def set_country(country):
         logging.error("Error setting country"
                       " %s: %s" % (country, exp))
         return flask.jsonify({ "status": "failure" }), 400
-    return flask.jsonify({ "status": "failure" }), 200
+    return flask.jsonify({ "status": "success" }), 200
 
+# in case the client wants to specify the IP address explicitly (VPN).
+@app.route("/set_ip/<ip_address>")
+@auth.login_required
+def set_ip(ip_address):
+    if ip_address is None:
+        flask.abort(404)
+
+    try:
+        update_client_info(flask.request.authorization.username,
+                           ip=ip_address)
+    except Exception as exp:
+        logging.error("Error setting IP address"
+                      " %s: %s" % (ip_address, exp))
+        return flask.jsonify({ "status": "failure" }), 400
+    return flask.jsonify({ "status": "success" }), 200
 
 @app.route("/experiments")
 @app.route("/experiments/<name>")
@@ -311,6 +344,17 @@ def get_system_status():
         else:
             continue
         info['is_vpn']    = client.is_vpn
+        info['asn'] = 0
+        info['as_owner'] = ""
+        if as_lookup is not None:
+            try:
+                asn = as_lookup.ip_to_asn(client.last_ip.split('/')[0])
+                owner = as_lookup.asn_to_owner(asn)
+                info['asn'] = asn
+                info['as_owner'] =  owner.decode('utf-8', 'ignore')
+            except Exception as exp:
+                logging.error("Error looking up AS info for "
+                              "%s: %s" % (client.last_ip, exp))
         results.append(info)
         number += 1
     return flask.jsonify({ "clients" : results })
