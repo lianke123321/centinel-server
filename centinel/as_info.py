@@ -1,6 +1,6 @@
 #
 # Abbas Razaghpanah (arazaghpanah@cs.stonybrook.edu)
-# February 2015, Stony Brook University
+# March 2015, Stony Brook University
 #
 # as_info.py: a library to lookup AS number and AS owner information
 # for IP addresses.
