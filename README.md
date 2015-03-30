@@ -22,13 +22,11 @@ Install psycopg2:
 
     $ pip install -U psycopg2
 
-#### Debian
-    $ apt-get install python-flask python-passlib python-flask-httpauth python-flask-sqlalchemy
-    $ pip install geoip2
-    $ python run.py
 
-#### OSX
-    $ pip install flask flask-httpauth flask-sqlalchemy passlib geoip2
+It is recommended that you run Python version > 2.7.9 and Werkzeug version >= 0.10.0 for better TLS support.
+
+#### Debian & OS X
+    $ pip install flask flask-httpauth flask-sqlalchemy passlib geoip2 netaddr postgres
     $ python run.py
 
 ### Supported platforms
