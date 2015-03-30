@@ -9,7 +9,7 @@ if (2,7,9) > sys.version_info:
     print ("WARNING: Python is older than 2.7.9, "
            "using older SSL version. This is "
            "incompatible with Werkzeug 0.10.x and "
-           "will break if you use Werkzeug > 0.9.x")
+           "will break if you use Werkzeug >= 0.10.0")
     from OpenSSL import SSL
     py_279 = False
 else:
