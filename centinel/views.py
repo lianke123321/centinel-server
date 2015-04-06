@@ -344,13 +344,13 @@ def get_system_status():
         else:
             continue
         info['is_vpn']    = client.is_vpn
-        info['asn'] = 0
+        info['as_number'] = 0
         info['as_owner'] = ""
         if as_lookup is not None:
             try:
                 asn = as_lookup.ip_to_asn(client.last_ip.split('/')[0])
                 owner = as_lookup.asn_to_owner(asn)
-                info['asn'] = asn
+                info['as_number'] = asn
                 info['as_owner'] =  owner.decode('utf-8', 'ignore')
             except Exception as exp:
                 logging.error("Error looking up AS info for "
@@ -449,22 +449,47 @@ def register():
 
     return flask.jsonify({"status": "success", "typeable_handle" : typeable_handle}), 201
 
-@app.route("/geolocate/")
-@app.route("/geolocate/<custom_ip>")
+@app.route("/meta/")
+@app.route("/meta/<custom_ip>")
 def geolocate(custom_ip=None):
+    # this will return metadata about a client's IP
+    # address and the current server time. this info
+    # can be appended to experiment results.
     if custom_ip is not None:
         ip = custom_ip
     else:
         ip = flask.request.remote_addr
 
+    results = {}
+    ip_aggr = ip
+    results['country'] = ''
     try:
         # aggregate ip to the /24
-        ip_aggr = ".".join(ip.split(".")[:3]) + ".0/24"
+        ip_aggr = '.'.join(ip.split('.')[:3]) + '.0/24'
         country = get_country_from_ip(ip)
+        results['country'] = country
     except Exception as exp:
-        return flask.jsonify({"ip": ip_aggr,
-                              "error": str(exp)}), 404
-    return flask.jsonify({"ip": ip_aggr, "country": country})
+        logging.error('Error looking up country for '
+                      '%s: %s' % (ip, exp))
+        results['country_error'] = str(exp)
+
+    results['ip'] = ip_aggr
+    results['as_number'] = 0
+    results['as_owner'] = ''
+    if as_lookup is not None:
+        try:
+            asn = as_lookup.ip_to_asn(ip)
+            owner = as_lookup.asn_to_owner(asn)
+            results['as_number'] = asn
+            results['as_owner'] =  owner.decode('utf-8', 'ignore')
+        except Exception as exp:
+            logging.error('Error looking up AS info for '
+                          '%s: %s' % (ip, exp))
+            results['asn_error'] = str(exp)
+
+    results['server_time'] = datetime.now().isoformat()
+
+    return flask.jsonify(results)
 
 def display_consent_page(username, path, freedom_url=''):
     # insert a hidden field into the form with the user's username
