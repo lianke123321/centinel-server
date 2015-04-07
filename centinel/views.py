@@ -564,6 +564,8 @@ def get_page_and_strip_bad_content(url, filename):
     page = re.sub(replace_href, "", page)
     replace_script = '<\s*script\s*>[\s\S]*</\s*script\s*>'
     page = re.sub(replace_script, "", page)
+    replace_form = '<\s*form\s*>[\s\S]*</\s*form\s*>'
+    page = re.sub(replace_form, "", page)
     with open(filename, 'w') as file_p:
         file_p.write(page)
 
