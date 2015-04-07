@@ -558,13 +558,14 @@ def get_page_and_strip_bad_content(url, filename):
     # replace external links with a blank reference (sucks for the
     # rendering engine to figure out, but hey, they get paid to work
     # that out)
-    replace_src = 'src\s*=\s*"\s*\S+\s*"'
+    # also remove form tags and scripts
+    replace_src = r'src\s*=\s*".*?"'
     page = re.sub(replace_src, "", req.content)
-    replace_href = 'href\s*=\s*"\s*\S+\s*"'
+    replace_href = r'href\s*=\s*".*?"'
     page = re.sub(replace_href, "", page)
-    replace_script = '<\s*script\s*>[\s\S]*</\s*script\s*>'
+    replace_script = r'<\s*script.*?>.*?</\s*script\s*>'
     page = re.sub(replace_script, "", page)
-    replace_form = '<\s*form\s*>[\s\S]*</\s*form\s*>'
+    replace_form = r'<\s*form.*?>.*?</\s*form\s*>'
     page = re.sub(replace_form, "", page)
     with open(filename, 'w') as file_p:
         file_p.write(page)
