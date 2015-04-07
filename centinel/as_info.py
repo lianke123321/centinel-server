@@ -60,5 +60,5 @@ class ASInfo:
 
     def asn_to_owner(self, as_number):
         if int(as_number) < 1:
-            raise Exception("Invalid AS number %s", as_number)
+            raise Exception("Invalid AS number %s" % (as_number))
         return self.as_info[as_number]
