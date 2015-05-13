@@ -212,9 +212,6 @@ def get_user_specific_content(folder, filename=None, json_var=None):
             with open(client_scheduler_filename, 'r') as file_p:
                 freqs.update(json.load(file_p))
 
-        with open(client_scheduler_filename, 'w') as file_p:
-            json.dump(freqs, file_p)
-
     files = {}
 
     # include global baseline content
@@ -265,6 +262,15 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     # this should never happen, but better be safe
     if '..' in filename or filename.startswith('/'):
         flask.abort(404)
+
+    # we have to make a special case for scheduler.info
+    # and send the composition of all 3 files as one file
+    if filename == "scheduler.info":
+        scheduler = json.dumps(freqs)
+        response = flask.make_response(scheduler)
+        response.headers["Content-Disposition"] = ("attachment; "
+                                                   "filename=scheduler.info")
+        return response
 
     if filename in files:
         # send requested experiment file
