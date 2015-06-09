@@ -507,9 +507,10 @@ def display_consent_page(username, path, freedom_url=''):
                                         urlsafe_b64encode(username))
     replace_field = u'replace-with-human-readable-username-value'
     initial_page = initial_page.replace(replace_field, (username))
-    freedom_replacement = u'replace-this-with-freedom-house'
-    initial_page = initial_page.replace(freedom_replacement,
-                                        u'static/' + freedom_url)
+    if freedom_url != '':
+        freedom_replacement = u'replace-this-with-freedom-house'
+        initial_page = initial_page.replace(freedom_replacement,
+                                            u'static/' + freedom_url)
     return initial_page
 
 @app.route("/consent/<typeable_handle>")
@@ -522,8 +523,12 @@ def get_initial_informed_consent_with_handle(typeable_handle):
     if client.has_given_consent:
         return "Consent already given."
     username = client.username
-    return display_consent_page(username,
-                                'static/initial_informed_consent.html')
+    if config.prefetch_freedomhouse:
+        return display_consent_page(username,
+                                    'static/initial_informed_consent.html')
+    else:
+        return display_consent_page(username,
+                                    'static/no_prefetch_informed_consent.html')
 
 @app.route("/get_initial_consent")
 def get_initial_informed_consent():
