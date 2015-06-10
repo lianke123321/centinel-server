@@ -23,6 +23,9 @@ maxmind_db      = os.path.join(centinel_home, 'maxmind.mmdb')
 net_to_asn_file      = os.path.join(centinel_home, 'data-raw-table')
 asn_to_owner_file    = os.path.join(centinel_home, 'data-used-autnums')
 
+# consent form
+prefetch_freedomhouse = False
+
 # web server
 ssl_cert = "server.iclab.org.crt"
 ssl_key  = "server.iclab.org.key"
