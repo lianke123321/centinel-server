@@ -219,11 +219,6 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     if os.path.exists(global_dir):
         for path in glob.glob(os.path.join(global_dir, "*")):
             file_name = os.path.basename(path)
-            # avoid sending the global scheduler here
-            # the only scheduler file sent must be the unified scheduler
-            # in the client's experiments dir.
-            if file_name == "scheduler.info":
-                continue
             files[file_name] = path
     else:
         print ("Global baseline folder \"%s\" "
@@ -236,11 +231,6 @@ def get_user_specific_content(folder, filename=None, json_var=None):
         # sync up all of the files in that dir.
         for path in glob.glob(os.path.join(country_specific_dir, "*")):
             file_name = os.path.basename(path)
-            # avoid sending the country-specific scheduler here
-            # the only scheduler file sent must be the unified scheduler
-            # in the client's experiments dir.
-            if file_name == "scheduler.info":
-                continue
             files[file_name] = path
     else:
         print ("Country baseline folder %s "
