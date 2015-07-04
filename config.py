@@ -1,5 +1,6 @@
 import os
 import getpass
+import logging
 
 # misc
 recommended_version = 1.1
@@ -30,3 +31,6 @@ prefetch_freedomhouse = False
 ssl_cert = "server.iclab.org.crt"
 ssl_key  = "server.iclab.org.key"
 ssl_chain = "server.iclab.org_bundle.crt"
+
+LOG_FILE = os.path.join(centinel_home, "centinel-server.log")
+LOG_LEVEL = logging.DEBUG
