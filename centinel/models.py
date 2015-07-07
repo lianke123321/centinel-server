@@ -30,6 +30,7 @@ class Client(db.Model):
     date_given_consent = db.Column(db.DateTime)
     typeable_handle = db.Column(db.String(8))
     is_vpn = db.Column(db.Boolean)
+    dont_display = db.Column(db.Boolean)
     country = db.Column(db.String(COUNTRY_CODE_LEN))
 
     # since a user can have multiple roles, we have a table to hold
@@ -44,6 +45,7 @@ class Client(db.Model):
         # custom functionality. Also do type checking on the variable
         # type
 
+        dont_display = False
         allowed_keys = {"username": "string",
                         "is_vpn": bool,
                         "registered_date": datetime,
