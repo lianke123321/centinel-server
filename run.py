@@ -29,6 +29,11 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    # create the centinel directory if it doesn't exist
+    if not os.path.exists(config.centinel_home):
+        os.makedirs(config.centinel_home)
+        print "Created centinel home directory at {}".format(config.centinel_home)
+
     db = centinel.db
     app = centinel.app
 
