@@ -2,22 +2,23 @@ from base64 import urlsafe_b64decode, urlsafe_b64encode
 import config
 from datetime import datetime
 import flask
+import GeoIP
 import geoip2.errors
 import geoip2.database
 import glob
 import hashlib
 import json
 import logging
+from netaddr import IPNetwork
 import os
 import random
 import re
 import requests
 import string
-import tarfile
 from werkzeug import secure_filename
 
 
-from centinel.as_info import ASInfo
+# local imports
 from centinel import constants
 from centinel.models import Client, Role
 
@@ -37,21 +38,28 @@ except (geoip2.database.maxminddb.InvalidDatabaseError, IOError):
 
 try:
     logging.info("Loading AS info database...")
-    as_lookup = ASInfo(config.net_to_asn_file, config.asn_to_owner_file)
+    as_lookup = GeoIP.open("/opt/centinel-server/asn-db.dat",
+                           GeoIP.GEOIP_STANDARD)
     logging.info("Done loading AS info database.")
 except Exception as exp:
     logging.warning(("Error loading ASN lookup information. You need a copy "
-                     "of each ASN database file to enable this feature. "
-                     "This can be done by running the following commands:\n"
-                     "# curl -o %s "
-                     "http://thyme.apnic.net/current/data-used-autnums\n"
-                     "# curl -o %s "
-                     "http://thyme.apnic.net/current/data-raw-table\n")
-                    % (config.asn_to_owner_file, config.net_to_asn_file))
+                     "of each ASN database file to enable this feature."))
     as_lookup = None
+
+
+def normalize_ip(ip):
+    """Take in an IP as a string in CIDR format or without subnet
+    and normalize to a single IP for lookups
+
+    """
+    net = IPNetwork(ip)
+    ip = str(net[0])
+    return ip
+
 
 def get_country_from_ip(ip):
     """Return the country for the given ip"""
+    ip = normalize_ip(ip)
     try:
         return reader.country(ip).country.iso_code
     # if we have disabled geoip support, reader should be None, so the
@@ -60,10 +68,24 @@ def get_country_from_ip(ip):
             geoip2.errors.GeoIP2Error, AttributeError):
         return '--'
 
-def generate_typeable_handle(length = 8):
+
+def get_asn_from_ip(ip, asn_reg=re.compile("AS(?P<asn>[0-9]+)")):
+    """Get the owner and ASN for the IP"""
+    ip = normalize_ip(ip)
+    if as_lookup is None:
+        return None, None
+    owner = as_lookup.org_by_addr(ip)
+    asn = None
+    if owner is not None:
+        asn = asn_reg.match(owner).group('asn')
+    return asn, owner
+
+
+def generate_typeable_handle(length=8):
     """Generate a random typeable (a-z, 1-9) string for consent URL."""
-    return "".join([random.choice(string.digits + 
+    return "".join([random.choice(string.digits +
                     string.ascii_lowercase) for _ in range(length)])
+
 
 def update_client_info(username, ip, country=None):
     """Update client's information upon contact.
@@ -479,8 +501,7 @@ def geolocate(custom_ip=None):
     results['as_owner'] = ''
     if as_lookup is not None:
         try:
-            asn = as_lookup.ip_to_asn(ip)
-            owner = as_lookup.asn_to_owner(asn)
+            asn, owner = get_asn_from_ip(ip)
             results['as_number'] = asn
             results['as_owner'] =  owner.decode('utf-8', 'ignore')
         except Exception as exp:
