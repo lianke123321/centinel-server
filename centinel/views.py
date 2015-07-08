@@ -29,26 +29,25 @@ auth = centinel.auth
 try:
     reader = geoip2.database.Reader(config.maxmind_db)
 except (geoip2.database.maxminddb.InvalidDatabaseError, IOError):
-    print ("You appear to have an error in your geolocation database.\n"
-           "Your database is either corrupt or does not exist\n"
-           "until you download a new copy, geolocation functionality\n"
-           "will be disabled.")
+    logging.warning("You appear to have an error in your geolocation "
+                    "database. Your database is either corrupt or does not "
+                    "exist until you download a new copy, geolocation "
+                    "functionality will be disabled.")
     reader = None
 
 try:
-    print "Loading AS info database..."
+    logging.info("Loading AS info database...")
     as_lookup = ASInfo(config.net_to_asn_file, config.asn_to_owner_file)
-    print "Done loading AS info database."
+    logging.info("Done loading AS info database.")
 except Exception as exp:
-    print ('Error loading ASN lookup information.\n'
-           'You need a copy of each ASN database file to enable this\n'
-           'feature.\n'
-           'This can be done by running the following commands:\n\n'
-           '# curl -o %s '
-           'http://thyme.apnic.net/current/data-used-autnums\n'
-           '# curl -o %s '
-           'http://thyme.apnic.net/current/data-raw-table\n'
-           % (config.asn_to_owner_file, config.net_to_asn_file))
+    logging.warning(("Error loading ASN lookup information. You need a copy "
+                     "of each ASN database file to enable this feature. "
+                     "This can be done by running the following commands:\n"
+                     "# curl -o %s "
+                     "http://thyme.apnic.net/current/data-used-autnums\n"
+                     "# curl -o %s "
+                     "http://thyme.apnic.net/current/data-raw-table\n")
+                    % (config.asn_to_owner_file, config.net_to_asn_file))
     as_lookup = None
 
 def get_country_from_ip(ip):
@@ -166,7 +165,8 @@ def get_results():
             try:
                 results[file_name] = json.load(result_file)
             except Exception, e:
-                print "Couldn't open file - %s - %s" % (path, str(e))
+                logging.error("Results: Couldn't open results file - %s - %s"
+                              % (path, str(e)))
 
     return flask.jsonify({"results": results})
 
@@ -221,8 +221,8 @@ def get_user_specific_content(folder, filename=None, json_var=None):
             file_name = os.path.basename(path)
             files[file_name] = path
     else:
-        print ("Global baseline folder \"%s\" "
-               "doesn't exist!" %(global_dir))
+        logging.warning("Global baseline folder \"%s\" "
+                        "doesn't exist!" %(global_dir))
 
     # include country-specific baseline content
     country_specific_dir = os.path.join(folder, client.country)
@@ -233,8 +233,8 @@ def get_user_specific_content(folder, filename=None, json_var=None):
             file_name = os.path.basename(path)
             files[file_name] = path
     else:
-        print ("Country baseline folder %s "
-               "doesn't exist!" %(country_specific_dir))
+        logging.warning("Country baseline folder %s "
+                        "doesn't exist!" %(country_specific_dir))
 
     user_dir = os.path.join(folder, username, '*')
     for path in glob.glob(user_dir):
