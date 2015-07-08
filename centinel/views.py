@@ -118,27 +118,33 @@ def update_client_info(username, ip, country=None):
             client.country = get_country_from_ip(ip)
     db.session.commit()
 
+
 @app.errorhandler(404)
 def not_found(error):
     return flask.make_response(flask.jsonify({'error': 'Not found'}), 404)
 
+
 @app.errorhandler(400)
 def bad_request(error):
     return flask.make_response(flask.jsonify({'error': 'Bad request'}), 400)
+
 
 @app.errorhandler(418)
 def no_consent(error):
     return flask.make_response(flask.jsonify({'error': 'Consent not given'}),
                                418)
 
+
 @auth.error_handler
 def unauthorized():
     json_resp = flask.jsonify({'error': 'Unauthorized access'})
     return flask.make_response(json_resp, 401)
 
+
 @app.route("/version")
 def get_recommended_version():
     return flask.jsonify({"version": config.recommended_version})
+
 
 @app.route("/results", methods=['POST'])
 @auth.login_required
@@ -168,6 +174,7 @@ def submit_result():
 
     return flask.jsonify({"status": "success"}), 201
 
+
 @app.route("/results")
 @auth.login_required
 def get_results():
@@ -192,6 +199,7 @@ def get_results():
 
     return flask.jsonify({"results": results})
 
+
 def get_user_specific_content(folder, filename=None, json_var=None):
     """Perform the functionality of get_experiments and get_inputs_files
 
@@ -214,12 +222,13 @@ def get_user_specific_content(folder, filename=None, json_var=None):
     # all of the scheduler files are combined together here.
     # this is run every time the experiment list or "scheduler.info"
     # is requested.
-    if (json_var == "experiments" and 
-        (filename is None or filename == "scheduler.info")):
+    if (json_var == "experiments" and
+       (filename is None or filename == "scheduler.info")):
         global_scheduler_filename = os.path.join(config.experiments_dir,
                                                  "global", "scheduler.info")
         country_scheduler_filename = os.path.join(config.experiments_dir,
-                                                  client.country, "scheduler.info")
+                                                  client.country,
+                                                  "scheduler.info")
         client_scheduler_filename = os.path.join(config.experiments_dir,
                                                  username, "scheduler.info")
 
@@ -244,7 +253,7 @@ def get_user_specific_content(folder, filename=None, json_var=None):
             files[file_name] = path
     else:
         logging.warning("Global baseline folder \"%s\" "
-                        "doesn't exist!" %(global_dir))
+                        "doesn't exist!" % (global_dir))
 
     # include country-specific baseline content
     country_specific_dir = os.path.join(folder, client.country)
@@ -256,7 +265,7 @@ def get_user_specific_content(folder, filename=None, json_var=None):
             files[file_name] = path
     else:
         logging.warning("Country baseline folder %s "
-                        "doesn't exist!" %(country_specific_dir))
+                        "doesn't exist!" % (country_specific_dir))
 
     user_dir = os.path.join(folder, username, '*')
     for path in glob.glob(user_dir):
@@ -291,6 +300,7 @@ def get_user_specific_content(folder, filename=None, json_var=None):
         # not found
         flask.abort(404)
 
+
 # in case the client wants to specify the country explicitly (VPN).
 @app.route("/set_country/<country>")
 @auth.login_required
@@ -304,8 +314,9 @@ def set_country(country):
     except Exception as exp:
         logging.error("Error setting country"
                       " %s: %s" % (country, exp))
-        return flask.jsonify({ "status": "failure" }), 400
-    return flask.jsonify({ "status": "success" }), 200
+        return flask.jsonify({"status": "failure"}), 400
+    return flask.jsonify({"status": "success"}), 200
+
 
 # in case the client wants to specify the IP address explicitly (VPN).
 @app.route("/set_ip/<ip_address>")
@@ -320,8 +331,9 @@ def set_ip(ip_address):
     except Exception as exp:
         logging.error("Error setting IP address"
                       " %s: %s" % (ip_address, exp))
-        return flask.jsonify({ "status": "failure" }), 400
-    return flask.jsonify({ "status": "success" }), 200
+        return flask.jsonify({"status": "failure"}), 400
+    return flask.jsonify({"status": "success"}), 200
+
 
 @app.route("/experiments")
 @app.route("/experiments/<name>")
@@ -332,6 +344,7 @@ def get_experiments(name=None):
     return get_user_specific_content(config.experiments_dir, filename=name,
                                      json_var="experiments")
 
+
 @app.route("/input_files")
 @app.route("/input_files/<name>")
 @auth.login_required
@@ -341,6 +354,7 @@ def get_inputs(name=None):
     return get_user_specific_content(config.inputs_dir, filename=name,
                                      json_var="inputs")
 
+
 @app.route("/clients")
 def get_system_status():
     """This is a list of clients and the countries from which they last
@@ -348,7 +362,8 @@ def get_system_status():
     doesn't reveal anything important (e.g. IP address, username, etc.).
     The list is shuffled each time so that numbers are randomly assigned.
 
-    Note: we don't display clients who have the dont_display column set to 1/True
+    Note: we don't display clients who have the dont_display column
+    set to 1/True
 
     """
     clients = Client.query.all()
@@ -363,24 +378,23 @@ def get_system_status():
         info['num'] = number
         info['country'] = client.country
         if client.last_seen is not None:
-            info['last_seen'] = str( client.last_seen.date() )
+            info['last_seen'] = str(client.last_seen.date())
         else:
             continue
-        info['is_vpn']    = client.is_vpn
+        info['is_vpn'] = client.is_vpn
         info['as_number'] = 0
         info['as_owner'] = ""
-        if as_lookup is not None:
-            try:
-                asn = as_lookup.ip_to_asn(client.last_ip.split('/')[0])
-                owner = as_lookup.asn_to_owner(asn)
-                info['as_number'] = asn
-                info['as_owner'] =  owner.decode('utf-8', 'ignore')
-            except Exception as exp:
-                logging.error("Error looking up AS info for "
-                              "%s: %s" % (client.last_ip, exp))
+        try:
+            asn, owner = get_asn_from_ip(client.last_ip)
+            info['as_number'] = asn
+            info['as_owner'] = owner.decode('utf-8', 'ignore')
+        except Exception as exp:
+            logging.error("Error looking up AS info for "
+                          "%s: %s" % (client.last_ip, exp))
         results.append(info)
         number += 1
-    return flask.jsonify({ "clients" : results })
+    return flask.jsonify({"clients": results})
+
 
 @app.route("/client_details")
 @auth.login_required
@@ -402,17 +416,18 @@ def get_clients():
     clients = Client.query.all()
     for client in clients:
         info = {}
-        info['username']  = client.username
-        info['handle']    = client.typeable_handle
-        info['country']   = client.country
+        info['username'] = client.username
+        info['handle'] = client.typeable_handle
+        info['country'] = client.country
         info['registered_date'] = client.registered_date
         info['last_seen'] = client.last_seen
-        info['last_ip']   = client.last_ip
-        info['is_vpn']    = client.is_vpn
+        info['last_ip'] = client.last_ip
+        info['is_vpn'] = client.is_vpn
         info['has_given_consent'] = client.has_given_consent
         info['date_given_consent'] = client.date_given_consent
         results.append(info)
-    return flask.jsonify({ "clients" : results })
+    return flask.jsonify({"clients": results})
+
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -454,12 +469,12 @@ def register():
         flask.abort(400)
 
     # create a typeable handle to put in the consent form URL
-    typeable_handle = generate_typeable_handle(length = 8)
+    typeable_handle = generate_typeable_handle(length=8)
     client = Client.query.filter_by(typeable_handle=typeable_handle).first()
     # if there is a collision, generate another one
     while client is not None:
-        typeable_handle = generate_typeable_handle(length = 8)
-        client = Client.query.filter_by(typeable_handle=typeable_handle).first()
+        type_hand = generate_typeable_handle(length=8)
+        client = Client.query.filter_by(typeable_handle=type_hand).first()
     client_json['typeable_handle'] = typeable_handle
 
     user = Client(**client_json)
@@ -470,7 +485,9 @@ def register():
     os.makedirs(os.path.join(config.experiments_dir, username))
     os.makedirs(os.path.join(config.inputs_dir, username))
 
-    return flask.jsonify({"status": "success", "typeable_handle" : typeable_handle}), 201
+    ret_json = {"status": "success", "typeable_handle": typeable_handle}
+    return flask.jsonify(ret_json), 201
+
 
 @app.route("/meta/")
 @app.route("/meta/<custom_ip>")
@@ -499,19 +516,19 @@ def geolocate(custom_ip=None):
     results['ip'] = ip_aggr
     results['as_number'] = 0
     results['as_owner'] = ''
-    if as_lookup is not None:
-        try:
-            asn, owner = get_asn_from_ip(ip)
-            results['as_number'] = asn
-            results['as_owner'] =  owner.decode('utf-8', 'ignore')
-        except Exception as exp:
-            logging.error('Error looking up AS info for '
-                          '%s: %s' % (ip, exp))
-            results['asn_error'] = str(exp)
+    try:
+        asn, owner = get_asn_from_ip(ip)
+        results['as_number'] = asn
+        results['as_owner'] = owner.decode('utf-8', 'ignore')
+    except Exception as exp:
+        logging.error('Error looking up AS info for '
+                      '%s: %s' % (ip, exp))
+        results['asn_error'] = str(exp)
 
     results['server_time'] = datetime.now().isoformat()
 
     return flask.jsonify(results)
+
 
 def display_consent_page(username, path, freedom_url=''):
     # insert a hidden field into the form with the user's username
@@ -528,6 +545,7 @@ def display_consent_page(username, path, freedom_url=''):
         initial_page = initial_page.replace(freedom_replacement,
                                             u'static/' + freedom_url)
     return initial_page
+
 
 @app.route("/consent/<typeable_handle>")
 def get_initial_informed_consent_with_handle(typeable_handle):
@@ -546,6 +564,7 @@ def get_initial_informed_consent_with_handle(typeable_handle):
         return display_consent_page(username,
                                     'static/no_prefetch_informed_consent.html')
 
+
 @app.route("/get_initial_consent")
 def get_initial_informed_consent():
     username = flask.request.args.get('username')
@@ -559,6 +578,7 @@ def get_initial_informed_consent():
         return "Consent already given."
     return display_consent_page(username,
                                 'static/initial_informed_consent.html')
+
 
 @app.route("/get_informed_consent_for_country")
 def get_country_specific_consent():
@@ -593,6 +613,7 @@ def get_country_specific_consent():
 
     return page_content
 
+
 def get_page_and_strip_bad_content(url, filename):
     """Get the given page, strip out all requests back to the original
     domain (identified via src tags), and write out the page
@@ -613,15 +634,16 @@ def get_page_and_strip_bad_content(url, filename):
     # also remove form tags and scripts
     sub_flags = re.MULTILINE | re.DOTALL
     replace_src = r'src\s*=\s*".*?"'
-    page = re.sub(replace_src, "", req.content, flags = sub_flags)
+    page = re.sub(replace_src, "", req.content, flags=sub_flags)
     replace_href = r'href\s*=\s*".*?"'
-    page = re.sub(replace_href, "", page, flags = sub_flags)
+    page = re.sub(replace_href, "", page, flags=sub_flags)
     replace_script = r'<\s*script.*?>.*?</\s*script\s*>'
-    page = re.sub(replace_script, "", page, flags = sub_flags)
+    page = re.sub(replace_script, "", page, flags=sub_flags)
     replace_form = r'<\s*form.*?>.*?</\s*form\s*>'
-    page = re.sub(replace_form, "", page, flags = sub_flags)
+    page = re.sub(replace_form, "", page, flags=sub_flags)
     with open(filename, 'w') as file_p:
         file_p.write(page)
+
 
 @app.route("/submit_consent")
 def update_informed_consent():
@@ -640,6 +662,7 @@ def update_informed_consent():
     response = ("Success! Thanks for registering; you are ready to start "
                 "sending us censorship measurement results.")
     return response
+
 
 @auth.verify_password
 def verify_password(username, password):
