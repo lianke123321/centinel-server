@@ -326,12 +326,17 @@ def get_system_status():
     doesn't reveal anything important (e.g. IP address, username, etc.).
     The list is shuffled each time so that numbers are randomly assigned.
 
+    Note: we don't display clients who have the dont_display column set to 1/True
+
     """
     clients = Client.query.all()
     random.shuffle(clients)
     results = []
     number = 0
     for client in clients:
+        # dont add clients who have asked not to be displayed
+        if client.dont_display:
+            continue
         info = {}
         info['num'] = number
         info['country'] = client.country

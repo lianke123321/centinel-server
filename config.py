@@ -7,8 +7,8 @@ recommended_version = 1.1
 
 # user details
 current_user    = getpass.getuser()
-centinel_home   = os.path.join(os.path.expanduser('~'+current_user),
-                               '.centinel')
+centinel_home   = "/opt/centinel-server/"
+
 
 # directory structure
 results_dir     = os.path.join(centinel_home, 'results')
