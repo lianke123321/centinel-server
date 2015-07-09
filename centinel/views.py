@@ -666,5 +666,11 @@ def update_informed_consent():
 
 @auth.verify_password
 def verify_password(username, password):
+    if (len(username) == 0) and (len(password) == 0):
+        logging.warning(("Username and password are both empty. Are you sure "
+                         "that you enabled the WSGI option for HTTP "
+                         "authentication?\n"
+                         "Add WSGIPassAuthorization On to your WSGI config "
+                         "file under enabled-sites in Apache"))
     user = Client.query.filter_by(username=username).first()
     return user and user.verify_password(password)
