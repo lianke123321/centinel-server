@@ -546,6 +546,13 @@ def display_consent_page(username, path, freedom_url=''):
                                             u'static/' + freedom_url)
     return initial_page
 
+@app.route("/static/<filename>")
+def static_resource(filename):
+    file_path = os.path.join(config.centinel_home, 'static', filename)
+    if os.path.isfile(os.path.join(file_path)) and (filename in config.static_files_allowed):
+        return flask.send_from_directory(os.path.join(config.centinel_home, 'static'), filename)
+    else:
+        flask.abort(404)
 
 @app.route("/consent/<typeable_handle>")
 def get_initial_informed_consent_with_handle(typeable_handle):

@@ -15,6 +15,7 @@ centinel_home = "/opt/centinel-server/"
 results_dir     = os.path.join(centinel_home, 'results')
 experiments_dir = os.path.join(centinel_home, 'experiments')
 inputs_dir = os.path.join(centinel_home, 'inputs')
+static_files_allowed = ['economistDemocracyIndex.pdf', 'consent.js']
 
 # details for how to access the database
 def load_uri_from_file(filename):
