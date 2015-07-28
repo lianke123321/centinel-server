@@ -20,15 +20,38 @@ Create a new Database:
 
 Install psycopg2:
 
-    $ pip install -U psycopg2
-
+	$ pip install -U psycopg2
 
 It is recommended that you run Python version > 2.7.9 and Werkzeug version >= 0.10.0 for better TLS support.
 
 #### Debian & OS X
-    $ pip install flask flask-httpauth flask-sqlalchemy passlib geoip2 netaddr postgres
+
+	$ pip install flask flask-httpauth flask-sqlalchemy passlib geoip2 netaddr postgres
     $ python run.py
 
 ### Supported platforms
     * Unix
     * Mac OS X
+
+### Running with Apache (WSGI) for production environments
+Install mod_wsgi and apache
+
+	$ sudo apt-get install apache2 libapache2-mod-wsgi
+
+Create the directory /opt/centinel-server and clone a copy of the centinel server repo with
+
+	$ sudo mkdir /opt/centinel-server
+    $ cd /opt/centinel-server; git clone https://github.com/iclab/centinel-server.git
+
+Add centinel server port to /etc/ports.conf by adding Listen 8082 to /etc/apache2/ports.conf.
+
+Add misc/centinel.conf to /etc/apache2/sites-enabled/
+
+And setup your mod\_wsgi with your virtual env by adding this line to your /etc/apache2/mods_available/wsgi.conf:
+
+        WSGIPythonPath /home/iclab/env/lib/python2.7/site-packages
+
+Edit your WSGI script if necessary at centinel.wsgi
+
+
+
