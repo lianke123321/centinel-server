@@ -546,6 +546,13 @@ def display_consent_page(username, path, freedom_url=''):
                                             u'static/' + freedom_url)
     return initial_page
 
+@app.route("/static/<filename>")
+def static_resource(filename):
+    file_path = os.path.join(config.centinel_home, 'static', filename)
+    if os.path.isfile(os.path.join(file_path)) and (filename in config.static_files_allowed):
+        return flask.send_from_directory(os.path.join(config.centinel_home, 'static'), filename)
+    else:
+        flask.abort(404)
 
 @app.route("/consent/<typeable_handle>")
 def get_initial_informed_consent_with_handle(typeable_handle):
@@ -557,12 +564,14 @@ def get_initial_informed_consent_with_handle(typeable_handle):
     if client.has_given_consent:
         return "Consent already given."
     username = client.username
+
     if config.prefetch_freedomhouse:
-        return display_consent_page(username,
-                                    'static/initial_informed_consent.html')
+        page_path = os.path.join(config.centinel_home,'static','initial_informed_consent.html')
     else:
-        return display_consent_page(username,
-                                    'static/no_prefetch_informed_consent.html')
+        page_path = os.path.join(config.centinel_home,'static','no_prefetch_informed_consent.html')
+
+    return display_consent_page(username,
+                                page_path)
 
 
 @app.route("/get_initial_consent")
@@ -577,7 +586,7 @@ def get_initial_informed_consent():
     if client.has_given_consent:
         return "Consent already given."
     return display_consent_page(username,
-                                'static/initial_informed_consent.html')
+                                os.path.join(config.centinel_home,'static','initial_informed_consent.html'))
 
 
 @app.route("/get_informed_consent_for_country")
@@ -599,12 +608,12 @@ def get_country_specific_consent():
     # if we don't already have the content from freedom house, fetch
     # it, then host it locally and insert it into the report
     freedom_url = "".join(["freedom_house_", country, ".html"])
-    filename = os.path.join("static", freedom_url)
+    filename = os.path.join(config.centinel_home, "static", freedom_url)
     # get the content from freedom house if we don't already have it
     get_page_and_strip_bad_content(constants.freedom_house_url(country),
                                    filename)
 
-    page_path = 'static/informed_consent.html'
+    page_path = os.path.join(centinel_home,'static','informed_consent.html')
     page_content = display_consent_page(username, page_path, freedom_url)
 
     flask.url_for('static', filename=freedom_url)
