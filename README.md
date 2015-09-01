@@ -14,19 +14,27 @@ Create user root:
 
     $ sudo -u postgres createuser -s root
 
-Create a new Database: 
+Change the password for the user postgres since Centinel-server connects to PSQL Database with this password: 
 
-    $ createdb -U root --locale=en_US.utf-8 -E utf-8 -O root centinel -T template0
+    $ sudo -u postgres psql
+    $ postgres=> alter user postgres password 'postgres';
 
 Install psycopg2:
-
+	pyscopg2 has a dependency on postgresql-server-dev. So install postgresql-server-dev
+	$ pip install -U postgresql-server-dev-X.Y
 	$ pip install -U psycopg2
+	
+Install GeoIP :
+	First install library libgeoip-dev
+	$ apt-get install libgeoip-dev
+	$ pip install GeoIP
+	
 
 It is recommended that you run Python version > 2.7.9 and Werkzeug version >= 0.10.0 for better TLS support.
 
 #### Debian & OS X
 
-	$ pip install flask flask-httpauth flask-sqlalchemy passlib geoip2 netaddr postgres
+    $ pip install flask flask-httpauth flask-sqlalchemy passlib geoip2 netaddr postgres
     $ python run.py
 
 ### Supported platforms
