@@ -19,12 +19,12 @@ Change the password for the user postgres since Centinel-server connects to PSQL
     $ sudo -u postgres psql
     $ postgres=> alter user postgres password 'postgres';
 
-Install psycopg2:
+### Install psycopg2:
 	pyscopg2 has a dependency on postgresql-server-dev. So install postgresql-server-dev
 	$ pip install -U postgresql-server-dev-X.Y
 	$ pip install -U psycopg2
 	
-Install GeoIP :
+### Install GeoIP :
 	First install library libgeoip-dev
 	$ apt-get install libgeoip-dev
 	$ pip install GeoIP
