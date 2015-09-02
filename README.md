@@ -19,13 +19,15 @@ Change the password for the user postgres since Centinel-server connects to PSQL
     $ sudo -u postgres psql
     $ postgres=> alter user postgres password 'postgres';
 
-### Install psycopg2:
-	pyscopg2 has a dependency on postgresql-server-dev. So install postgresql-server-dev
+### Install psycopg2
+pyscopg2 has a dependency on postgresql-server-dev. So install postgresql-server-dev
+
 	$ pip install -U postgresql-server-dev-X.Y
 	$ pip install -U psycopg2
 	
-### Install GeoIP :
-	First install library libgeoip-dev
+### Install GeoIP
+First install library libgeoip-dev
+
 	$ apt-get install libgeoip-dev
 	$ pip install GeoIP
 	
@@ -40,6 +42,13 @@ It is recommended that you run Python version > 2.7.9 and Werkzeug version >= 0.
 ### Supported platforms
     * Unix
     * Mac OS X
+
+### Running in your local system
+change production = False in config.py so that  the app will try to connect to local postgres sql server.
+
+pass the --adhoc option to python run.py so that the application will not try to load ssl certificate.
+
+	$ python run.py --adhoc
 
 ### Running with Apache (WSGI) for production environments
 Install mod_wsgi and apache
