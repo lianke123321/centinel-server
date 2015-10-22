@@ -104,5 +104,5 @@ if __name__ == "__main__":
             path = os.path.join(directory, "country_list.csv")
 
         output = open(path, 'w')
-        output.write(req.text)
+        output.write(req.text.encode('utf-8'))
         output.close()
