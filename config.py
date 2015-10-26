@@ -4,11 +4,11 @@ import logging
 
 # misc
 recommended_version = 1.1
-production = True
+production = False
 
 # user details
 current_user  = getpass.getuser()
-centinel_home = "/opt/centinel-server/"
+centinel_home = "/home/adrian/.centinel-server/"
 
 
 # directory structure
