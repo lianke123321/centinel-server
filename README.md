@@ -8,6 +8,7 @@ Get the maxind geolocation database by running
 
     $ mkdir ~/.centinel
     $ curl http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz | gunzip -c > ~/.centinel/maxmind.mmdb
+    $ curl http://download.maxmind.com/download/geoip/database/asnum/GeoIPASNum.dat.gz | gunzip -c > ~/.centinel/asn-db.dat
 
 Download and install PostgreSQL [here](http://www.postgresql.org/download/).
 Create user root:
